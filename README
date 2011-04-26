@@ -1,0 +1,82 @@
+
+
+
+=== PROTOCOL ===
+
+@see include/protocol.h for code and definitions regarding the protocol.
+
+All parameters can be send via GET or POST, with the exception of message ("m"),
+which is too big to be sent via GET.  
+
+PARAM NAME      ACTUAL PARAM        LENGTH      PURPOSE
+
+user                u               32          The user associated with this
+                                                request.  All push requests will
+                                                associate this user with the
+                                                pushed events, and all updates
+                                                will use given user's queue to
+                                                determine which events to update.
+
+session             s               32          The session associated with this
+                                                request.  Push actions will push
+                                                the event to all users
+                                                associated with given session;
+                                                update requests will update all
+                                                events associated with given
+                                                request that have not been
+                                                received by the given user.
+
+action              a               1           Single character code
+                                                representing the actual action for 
+                                                this request.  Action codes are
+                                                listed below.
+
+message             m               10M         A json encoded message.  Should
+                                                be an array of json objects,
+                                                where each object is converted
+                                                into an event on the server
+                                                side.  Therefore, all message
+                                                text should take the form of:
+                                                [ ... json object ,
+                                                    json object , ... ]
+                                                where a json object looks like:
+                                                { field1: val1, field2: val2,
+                                                    ... }
+
+Request types are indicated by the action ("a") field, and tell the server what
+the user is intending to do with the request.  Depending on the action, not all
+parameters are required.
+
+ACTION NAME     ACTUAL ACTION       REQ PARAMS  PURPOSE 
+
+register            r               u,s,a       Registers a user with a session,
+                                                both to receive updates and push 
+                                                events.
+
+unregister          d               u,s,a       Unregisters a user with a session,
+                                                so the user can no longer push
+                                                or receive updates from this
+                                                session unless the user
+                                                registers again.
+
+push                p               u,s,a,m     Push events to this session,
+                                                posted as by given user.
+
+update              u               u,s,a       Request updates from the server.
+                                                Updates will be returned in json 
+                                                encoded data, in the same format
+                                                as it is supplied to the server
+                                                during push requests.
+
+                                                It is important to note that an
+                                                update request will not return
+                                                unless there is data to return.
+                                                This is the purpose of a
+                                                "real-time" server: clients
+                                                receive updates as they are
+                                                given.  However, you can specify
+                                                a timeout in the configuration,
+                                                after which the update request 
+                                                will return with an empty json 
+                                                array.
+
