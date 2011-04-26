@@ -1,7 +1,9 @@
 #ifndef TYPE_H
 #define TYPE_H
 
-#define NULL    0
+#ifndef size_t
+#define size_t unsigned
+#endif // size_t
 
 typedef char bool;
 
@@ -15,9 +17,6 @@ typedef unsigned    short uint16;
 typedef             short sint16;
 typedef unsigned    char uint8;
 typedef             char sint8;
-
-typedef uint32  size_t;
-
 
 #endif // TYPE_H
 

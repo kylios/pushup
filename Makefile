@@ -1,5 +1,6 @@
 SRCFOLDER= src/
-SOURCES= $(SRCFOLDER)lib/mongoose.o 
+SOURCES= $(SRCFOLDER)lib/mongoose.o \
+		 $(SRCFOLDER)protocol.o
 
 MAINSRC= $(SOURCES) $(SRCFOLDER)main.o
 

@@ -25,6 +25,8 @@
 extern "C" {
 #endif // __cplusplus
 
+#include "type.h"
+
 struct mg_context;     // Handle for the HTTP service itself
 struct mg_connection;  // Handle for the individual connection
 
