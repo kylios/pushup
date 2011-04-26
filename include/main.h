@@ -1,4 +1,4 @@
-#include "mongoose.h"
+#include "lib/mongoose.h"
 
 /**
  * Defines a handler for a particular mongoose event type.

@@ -199,7 +199,7 @@ typedef int SOCKET;
 
 #endif // End of Windows and UNIX specific includes
 
-#include "mongoose.h"
+#include "lib/mongoose.h"
 
 #define MONGOOSE_VERSION "2.11"
 #define PASSWORDS_FILE_NAME ".htpasswd"

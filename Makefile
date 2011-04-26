@@ -17,3 +17,4 @@ src/main.o: $(SRCFOLDER)main.c
 clean:
 	rm $(EXE)
 	rm $(SRCFOLDER)/*.o
+	rm $(SRCFOLDER)/lib/*.o
