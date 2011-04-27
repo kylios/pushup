@@ -98,6 +98,7 @@ void* mg_new_request_func (struct mg_connection* conn,
     {
         case PR_PUSH:
             printf ("push\n");
+            printf ("result: %d\n", init_events (pinfo.m));
             break;
         case PR_UPDATE:
             printf ("update\n");
