@@ -1,17 +1,20 @@
 #ifndef EVENT_H
 #define EVENT_H
 
+#include <pthread.h>
+
 #include "user.h"
 
-typedef struct {
-    int reg_count;   // Number of registered subscribers.  When this becomes
-                        // zero, it should be safe to free this object from memory
+typedef struct 
+{
+    pthread_mutex_t reg_count_lock;
+    int reg_count;  // Number of registered subscribers.  When this becomes
+                    // zero, it should be safe to free this object from memory
 
-    char* message;   // The message, as a text blob.  If you need specific 
-    size_t length;   // parameters in your message, it's reccommended to 
-                        // format the message as a json object.
+    const char* message;
+    size_t len;
 
-    user_t* sender;  // Pointer to the user who broadcasted the event
+    user_t* sender; // Pointer to the user who broadcasted the event
 
 } event_t;
 
