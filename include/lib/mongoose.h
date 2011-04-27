@@ -44,6 +44,8 @@ struct mg_request_info {
   int status_code;       // HTTP reply status code
   int is_ssl;            // 1 if SSL-ed, 0 if not
   int num_headers;       // Number of headers
+//  char *request_body;    // The body of the request
+//  size_t body_length;    // Length of request_body, including null terminator
   struct mg_header {
     char *name;          // HTTP header name
     char *value;         // HTTP header value

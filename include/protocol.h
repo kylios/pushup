@@ -1,6 +1,8 @@
 #ifndef PROTOCOL_H
 #define PROTOCOL_H
 
+#include <string.h> 
+
 #include "type.h"
 #include "lib/mongoose.h"
 
@@ -40,6 +42,12 @@ typedef struct {
     char* s;    // session
     char* m;    // message
 } protocol_info_t;
+
+#define require(PARAM){ \
+    if ((PARAM) == NULL || strlen((PARAM)) == 0){ \
+        return PR_DEFAULT; \
+    } \
+}
 
 /**
  * Evaluates the request and parses all the information out of it, including the

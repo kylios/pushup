@@ -1,6 +1,7 @@
+#include <stdio.h>
+
 #include "debug.h"
 #include "type.h"
-#include <stdio.h>
 
    
 /**

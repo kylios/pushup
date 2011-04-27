@@ -2523,6 +2523,14 @@ static void parse_http_headers(char **buf, struct mg_request_info *ri) {
   }
 }
 
+// Parse out the body from the given buffer, advance buffer to the end of the 
+// request.
+static void parse_http_body(char **buf, struct mg_request_info *ri) {
+    int i;
+
+    printf ("Body: %s\n", *buf);    
+}
+
 static int is_valid_http_method(const char *method) {
   return !strcmp(method, "GET") || !strcmp(method, "POST") ||
     !strcmp(method, "HEAD") || !strcmp(method, "CONNECT") ||
@@ -2546,6 +2554,7 @@ static int parse_http_request(char *buf, struct mg_request_info *ri) {
       strncmp(ri->http_version, "HTTP/", 5) == 0) {
     ri->http_version += 5;   /* Skip "HTTP/" */
     parse_http_headers(&buf, ri);
+    
     status = 1;
   }
 

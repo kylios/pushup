@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "lib/mongoose.h"
 #include "main.h"
@@ -67,22 +68,27 @@ void* mg_new_request_func (struct mg_connection* conn,
     /*
      * Get the request body
      * */
-    const char* content_length = mg_get_header (conn, "Content-Length");
-    if (content_length == NULL)
-    {
-        return NULL;
-    }
-    const char* content = 
-        (const char*) malloc (sizeof (char) * (1 + atoi (content_length)));
-    if (content == NULL)
-    {
-        return NULL;
-    }
-    mg_read (conn, (void*) content, sizeof (char) * (1 + atoi (content_length)));
+    char* _content = NULL;
+    size_t content_length = 1;
 
-    printf ("Content: %s\n", content);
-    
+    // If the request is not POST, then we don't need to bother
+    if (strcmp (info->request_method, "POST") == 0)
+    {
+        const char* str_content_length = mg_get_header (conn, "Content-Length");
+        if (str_content_length != NULL)
+        {
+            content_length += atoi (str_content_length);
 
+            printf ("Content-Length: %u\n", content_length);
+            _content = (char*) malloc (sizeof (char) * content_length);
+            if (_content != NULL)
+            {
+                mg_read (conn, (void*) _content, sizeof (char) * content_length);
+            }
+        }
+    }
+    _content[content_length - 1] = '\0';
+    const char* content = (const char*) _content;
 
     /*
      * Figure out what they want to do with this request

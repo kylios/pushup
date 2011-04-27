@@ -1,3 +1,5 @@
+#include <stddef.h>
+
 #include "lib/list.h"
 #include "type.h"
 #include "debug.h"
