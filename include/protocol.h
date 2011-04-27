@@ -45,7 +45,8 @@ typedef struct {
  * Evaluates the request and parses all the information out of it, including the
  * request type and parameters, etc. 
  * */
-reqtype_t protocol_eval (protocol_info_t*, const struct mg_request_info*);
+reqtype_t protocol_eval (protocol_info_t*, const char*, 
+        const struct mg_request_info*);
 
 
 #endif // PROTOCOL_H

@@ -65,10 +65,30 @@ void* mg_new_request_func (struct mg_connection* conn,
         const struct mg_request_info* info)
 {
     /*
+     * Get the request body
+     * */
+    const char* content_length = mg_get_header (conn, "Content-Length");
+    if (content_length == NULL)
+    {
+        return NULL;
+    }
+    const char* content = 
+        (const char*) malloc (sizeof (char) * (1 + atoi (content_length)));
+    if (content == NULL)
+    {
+        return NULL;
+    }
+    mg_read (conn, (void*) content, sizeof (char) * (1 + atoi (content_length)));
+
+    printf ("Content: %s\n", content);
+    
+
+
+    /*
      * Figure out what they want to do with this request
      * */
     protocol_info_t pinfo;
-    switch (protocol_eval (&pinfo, info))
+    switch (protocol_eval (&pinfo, content, info))
     {
         case PR_PUSH:
             printf ("push\n");

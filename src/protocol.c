@@ -6,8 +6,29 @@
 #include "lib/mongoose.h"
 #include "type.h"
 
+
+/**
+ * Return the value of an http variable by evaluating the query string and
+ * postdate. 
+ * */
+static int
+get_var (const struct mg_request_info* info, char* request_body,
+        const char* buf, size_t buf_len, 
+        const char* var, char* dst, size_t dst_len)
+{
+    const char* qs = info->query_string;
+    size_t sz = strlen (qs == NULL ? "" : qs);
+
+    int result = mg_get_var (qs, sz, var, dst, dst_len);
+//    if (result == -1)
+//    {
+//        const char* postdata = info->
+//    }
+};
+
 reqtype_t 
-protocol_eval (protocol_info_t* pinfo, const struct mg_request_info* rinfo)
+protocol_eval (protocol_info_t* pinfo, const char* request_body,
+        const struct mg_request_info* rinfo)
 {
     /*
      * Get the variables
