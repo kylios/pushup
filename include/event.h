@@ -12,7 +12,6 @@ typedef struct
                     // zero, it should be safe to free this object from memory
 
     const char* message;
-    size_t len;
 
     user_t* sender; // Pointer to the user who broadcasted the event
 
@@ -28,6 +27,6 @@ int init_events (const char* message);
 
 
 
-void event_init (event_t*, char*, size_t);
+void event_init (event_t*, user_t*, const char*);
 
 #endif // EVENT_H
