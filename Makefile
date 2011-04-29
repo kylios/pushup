@@ -1,9 +1,11 @@
 SRCFOLDER= src/
 SOURCES= $(SRCFOLDER)lib/mongoose.o \
 		 $(SRCFOLDER)lib/list.o \
+		 $(SRCFOLDER)lib/hash.o \
 		 $(SRCFOLDER)protocol.o \
 		 $(SRCFOLDER)debug.o \
-		 $(SRCFOLDER)event.o 
+		 $(SRCFOLDER)event.o \
+		 $(SRCFOLDER)user.o 
 
 MAINSRC= $(SOURCES) $(SRCFOLDER)main.o
 

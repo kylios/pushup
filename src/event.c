@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <type.h>
 #include <pthread.h>
 
@@ -7,6 +8,7 @@
 #include "event.h"
 #include "user.h"
 #include "lib/list.h"
+#include "debug.h"
 
 /*
  * Keeps track of all the events
@@ -78,6 +80,7 @@ parse_json_events (char* message, json_parse_state_t* state)
 int 
 init_events (const char* message, user_t* user)
 {
+    int num = 0;
     printf ("message: %s\n", message);
 
     // The message we're given is marked const, so let's copy ourselves a new
@@ -88,13 +91,16 @@ init_events (const char* message, user_t* user)
     json_parse_state_t state = { 0, NULL };
 
     const char* str = parse_json_events (m, &state);
-    while (NULL != str)
+    while (NULL != str && num >= 0)
     {
+        num++;
         event_t* e = (event_t*) malloc (sizeof (event_t));
         event_init (e, user, str);
         str = parse_json_events (NULL, &state);
     }
     printf ("DONE!\n");
+
+    return num;
 };
 
 void 
@@ -105,5 +111,6 @@ event_init (event_t* e, user_t* user, const char* message)
     e->message = message;
     e->reg_count = 0;
     e->sender = user;
-    e->reg_count_lock = PTHREAD_MUTEX_INITIALIZER;
+    pthread_mutex_init (&e->reg_count_lock, NULL);
 };
+

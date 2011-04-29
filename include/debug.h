@@ -14,7 +14,7 @@ void hexdump (void* start, uint32 sz);
             #expression, __FILE__, __LINE__, __func__);    \
         debug_backtrace (); \
         exit(1); \
-    }
+    } 
 
 #define DEBUG_MARK  \
     printf ("DEBUG %s: %d (`%s')\n", __FILE__, __LINE__, __func__);

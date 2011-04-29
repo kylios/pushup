@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "lib/mongoose.h"
+#include "event.h"
 #include "main.h"
 #include "type.h"
 #include "debug.h"
@@ -98,13 +99,22 @@ void* mg_new_request_func (struct mg_connection* conn,
     {
         case PR_PUSH:
             printf ("push\n");
-            printf ("result: %d\n", init_events (pinfo.m));
+            printf ("result: %d\n", init_events (pinfo.m, NULL));
             break;
         case PR_UPDATE:
             printf ("update\n");
             break;
         case PR_REG:
             printf ("register\n");
+
+            const char* uid = pinfo.u;
+            user_t* user = (user_t*) malloc (sizeof (user_t));
+            if (user == NULL)
+            {
+                // TODO: proper error handler
+                break;
+            }
+            user_init (user, uid);
             break;
         case PR_UREG:
             printf ("unregister\n");
