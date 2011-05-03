@@ -7,10 +7,12 @@
 --out-implib	mongoose/Makefile	/^		-shared -Wl,--out-implib=$(PROG).lib -o _$(PROG).dll$/;"	m
 ACCESS_CONTROL_LIST	src/lib/mongoose.c	/^  ENABLE_KEEP_ALIVE, ACCESS_CONTROL_LIST, MAX_REQUEST_SIZE,$/;"	e	enum:__anon3	file:
 ACCESS_LOG_FILE	src/lib/mongoose.c	/^  PROTECT_URI, AUTHENTICATION_DOMAIN, SSI_EXTENSIONS, ACCESS_LOG_FILE,$/;"	e	enum:__anon3	file:
+ACTION_STR_SZ	include/protocol.h	25;"	d
 ARRAY_SIZE	src/lib/mongoose.c	208;"	d	file:
+ASSERT	include/debug.h	11;"	d
 AUTHENTICATION_DOMAIN	src/lib/mongoose.c	/^  PROTECT_URI, AUTHENTICATION_DOMAIN, SSI_EXTENSIONS, ACCESS_LOG_FILE,$/;"	e	enum:__anon3	file:
 BUFSIZ	src/lib/mongoose.c	63;"	d	file:
-CFLAGS	Makefile	/^CFLAGS= -Iinclude -Wall -std=c99$/;"	m
+CFLAGS	Makefile	/^CFLAGS= -Iinclude -Wall -std=c99 $/;"	m
 CFLAGS	mongoose/Makefile	/^CFLAGS=		-W -Wall -std=c99 -pedantic -O2 -fomit-frame-pointer $(COPT)$/;"	m
 CFLAGS	mongoose/examples/Makefile	/^CFLAGS=	-W -Wall -I.. -pthread -g$/;"	m
 CGI_ENVIRONMENT	src/lib/mongoose.c	/^  CGI_EXTENSIONS, CGI_ENVIRONMENT, PUT_DELETE_PASSWORDS_FILE, CGI_INTERPRETER,$/;"	e	enum:__anon3	file:
@@ -35,6 +37,8 @@ CYASRC	mongoose/Makefile	/^CYASRC= $(CYA)\/src\/cyassl_int.c \\$/;"	m
 Connection	mongoose/bindings/python/mongoose.py	/^class Connection(object):$/;"	c	inherits:object
 ControlHandler	mongoose/main.c	/^static void WINAPI ControlHandler(DWORD code) {$/;"	f	file:	signature:(DWORD code)
 DBG	mongoose/Makefile	/^DBG=	\/DNDEBUG \/O1$/;"	m
+DEBUG_H	include/debug.h	2;"	d
+DEBUG_MARK	include/debug.h	19;"	d
 DEBUG_TRACE	src/lib/mongoose.c	211;"	d	file:
 DEBUG_TRACE	src/lib/mongoose.c	222;"	d	file:
 DIR	src/lib/mongoose.c	/^typedef struct DIR {$/;"	s	file:
@@ -58,6 +62,7 @@ ERR_error_string	src/lib/mongoose.c	/^extern char *ERR_error_string(unsigned lon
 ERR_error_string	src/lib/mongoose.c	304;"	d	file:
 ERR_get_error	src/lib/mongoose.c	/^extern unsigned long ERR_get_error(void);$/;"	p	file:	signature:(void)
 ERR_get_error	src/lib/mongoose.c	303;"	d	file:
+EVENT_H	include/event.h	2;"	d
 EVENT_LOG	mongoose/bindings/python/mongoose.py	/^EVENT_LOG = 2$/;"	v
 EWOULDBLOCK	src/lib/mongoose.c	99;"	d	file:
 EXE	Makefile	/^EXE= pushup$/;"	m
@@ -71,6 +76,10 @@ F4	src/lib/mongoose.c	1776;"	d	file:
 FALSE	include/types.h	7;"	d
 GLOBAL_PASSWORDS_FILE	src/lib/mongoose.c	/^  GLOBAL_PASSWORDS_FILE, INDEX_FILES,$/;"	e	enum:__anon3	file:
 GUILIB	mongoose/Makefile	/^GUILIB=	user32.lib shell32.lib$/;"	m
+HASH_BUCKETS	include/lib/hash.h	29;"	d
+HASH_ELEM_INITIALIZER	include/lib/hash.h	47;"	d
+HASH_ELEM_TO_LIST_ELEM	include/lib/hash.h	40;"	d
+HASH_ENTRY	include/lib/hash.h	37;"	d
 HEXTOI	src/lib/mongoose.c	1391;"	d	file:
 HTTP_ERROR	mongoose/bindings/python/mongoose.py	/^HTTP_ERROR = 1$/;"	v
 ID_EDIT_CONFIG	mongoose/main.c	304;"	d	file:
@@ -91,10 +100,15 @@ IS_DIRSEP_CHAR	src/lib/mongoose.c	96;"	d	file:
 J	mongoose/examples/html/jquery.js	/^e(a[0],b):w}function J(){return(new Date).getTime()}function Y(){return false}function Z(){return true}function na(a,b,d){d[0].type=a;return c.event.handle.apply(b,d)}function oa(a){var b,d=[],f=[],e=arguments,j,i,o,k,n,r;i=c.data(this,"events");if(!(a.liveFired===this||!i||!i.live||a.button&&a.type==="click")){a.liveFired=this;var u=i.live.slice(0);for(k=0;k<u.length;k++){i=u[k];i.origType.replace(O,"")===a.type?f.push(i.selector):u.splice(k--,1)}j=c(a.target).closest(f,a.currentTarget);n=0;for(r=$/;"	f
 LDFLAGS	Makefile	/^LDFLAGS= -pthread -ldl$/;"	m
 LIB	mongoose/Makefile	/^LIB=		_$(PROG).so$/;"	m
+LIB_KERNEL_HASH_H	include/lib/hash.h	22;"	d
 LINFLAGS	mongoose/Makefile	/^LINFLAGS=	-ldl -pthread $(CFLAGS)$/;"	m
 LINK	mongoose/Makefile	/^LINK=	\/link \/incremental:no \/libpath:$(VC)\\lib \/subsystem:windows \\$/;"	m
 LISTENING_PORT	mongoose/test/embed.c	34;"	d	file:
 LISTENING_PORTS	src/lib/mongoose.c	/^  EXTRA_MIME_TYPES, LISTENING_PORTS,$/;"	e	enum:__anon3	file:
+LIST_ELEM_INITIALIZER	include/lib/list.h	26;"	d
+LIST_ELEM_TO_HASH_ELEM	include/lib/hash.h	44;"	d
+LIST_ENTRY	include/lib/list.h	22;"	d
+LIST_H	include/lib/list.h	2;"	d
 MAC_SHARED	mongoose/Makefile	/^MAC_SHARED=	-flat_namespace -bundle -undefined suppress$/;"	m
 MAINSRC	Makefile	/^MAINSRC= $(SOURCES) $(SRCFOLDER)main.o$/;"	m
 MAKEUQUAD	src/lib/mongoose.c	69;"	d	file:
@@ -115,6 +129,7 @@ MD5STEP	src/lib/mongoose.c	1778;"	d	file:
 MD5Transform	src/lib/mongoose.c	/^static void MD5Transform(uint32_t buf[4], uint32_t const in[16]) {$/;"	f	file:	signature:(uint32_t buf[4], uint32_t const in[16])
 MD5Update	src/lib/mongoose.c	/^static void MD5Update(MD5_CTX *ctx, unsigned char const *buf, unsigned len) {$/;"	f	file:	signature:(MD5_CTX *ctx, unsigned char const *buf, unsigned len)
 MD5_CTX	src/lib/mongoose.c	/^} MD5_CTX;$/;"	t	typeref:struct:MD5Context	file:
+MESSAGE_STR_SZ	include/protocol.h	28;"	d
 MG_EVENT_LOG	include/lib/mongoose.h	/^  MG_EVENT_LOG,     \/\/ Mongoose logs an event, request_info.log_message$/;"	e	enum:mg_event
 MG_HTTP_ERROR	include/lib/mongoose.h	/^  MG_HTTP_ERROR,    \/\/ HTTP error must be returned to the client$/;"	e	enum:mg_event
 MG_INIT_SSL	include/lib/mongoose.h	/^  MG_INIT_SSL,      \/\/ Mongoose initializes SSL. Instead of mg_connection *,$/;"	e	enum:mg_event
@@ -181,12 +196,23 @@ NUM_OPTIONS	src/lib/mongoose.c	/^  NUM_OPTIONS$/;"	e	enum:__anon3	file:
 NUM_THREADS	src/lib/mongoose.c	/^  DOCUMENT_ROOT, SSL_CERTIFICATE, NUM_THREADS, RUN_AS_USER,$/;"	e	enum:__anon3	file:
 O_BINARY	src/lib/mongoose.c	188;"	d	file:
 O_NONBLOCK	src/lib/mongoose.c	97;"	d	file:
+PANIC	include/debug.h	22;"	d
 PASSWORDS_FILE_NAME	src/lib/mongoose.c	205;"	d	file:
 PATH_MAX	mongoose/main.c	42;"	d	file:
 PATH_MAX	src/lib/mongoose.c	51;"	d	file:
 PROG	mongoose/Makefile	/^PROG=	mongoose$/;"	m
 PROG	mongoose/examples/Makefile	/^PROG=	chat$/;"	m
 PROTECT_URI	src/lib/mongoose.c	/^  PROTECT_URI, AUTHENTICATION_DOMAIN, SSI_EXTENSIONS, ACCESS_LOG_FILE,$/;"	e	enum:__anon3	file:
+PROTOCOL_H	include/protocol.h	2;"	d
+PROTO_ACTION	include/protocol.h	17;"	d
+PROTO_MESSAGE	include/protocol.h	20;"	d
+PROTO_SESSION	include/protocol.h	19;"	d
+PROTO_USER	include/protocol.h	18;"	d
+PR_DEFAULT	include/protocol.h	/^    , PR_DEFAULT\/\/ default (error) type$/;"	e	enum:reqtype
+PR_PUSH	include/protocol.h	/^      PR_PUSH   \/\/ pushing an event to the server$/;"	e	enum:reqtype
+PR_REG	include/protocol.h	/^    , PR_REG    \/\/ register (login) a user with a session$/;"	e	enum:reqtype
+PR_UPDATE	include/protocol.h	/^    , PR_UPDATE \/\/ requesting an update for events in the queue$/;"	e	enum:reqtype
+PR_UREG	include/protocol.h	/^    , PR_UREG   \/\/ unregister (logout) a user with a session$/;"	e	enum:reqtype
 PUT_DELETE_PASSWORDS_FILE	src/lib/mongoose.c	/^  CGI_EXTENSIONS, CGI_ENVIRONMENT, PUT_DELETE_PASSWORDS_FILE, CGI_INTERPRETER,$/;"	e	enum:__anon3	file:
 Program	mongoose/bindings/csharp/example.cs	/^public class Program {$/;"	c
 Program.Main	mongoose/bindings/csharp/example.cs	/^	static void Main() {$/;"	m	class:Program	file:	access:private	signature:()
@@ -196,11 +222,13 @@ Qa	mongoose/examples/html/jquery.js	/^(function(A,w){function ma(){if(!c.isReady
 RATE_DIFF	src/lib/mongoose.c	71;"	d	file:
 RTLD_LAZY	src/lib/mongoose.c	115;"	d	file:
 RUN_AS_USER	src/lib/mongoose.c	/^  DOCUMENT_ROOT, SSL_CERTIFICATE, NUM_THREADS, RUN_AS_USER,$/;"	e	enum:__anon3	file:
+SESSION_H	include/session.h	2;"	d
+SESSION_STR_SZ	include/protocol.h	27;"	d
 SESSION_TTL	mongoose/examples/chat.c	27;"	d	file:
 SHUT_WR	src/lib/mongoose.c	105;"	d	file:
 SIGKILL	src/lib/mongoose.c	1090;"	d	file:
 SOCKET	src/lib/mongoose.c	/^typedef int SOCKET;$/;"	t	file:
-SOURCES	Makefile	/^SOURCES= $(SRCFOLDER)lib\/mongoose.o $/;"	m
+SOURCES	Makefile	/^SOURCES= $(SRCFOLDER)lib\/mongoose.o \\$/;"	m
 SRCFOLDER	Makefile	/^SRCFOLDER= src\/$/;"	m
 SSI_EXTENSIONS	src/lib/mongoose.c	/^  PROTECT_URI, AUTHENTICATION_DOMAIN, SSI_EXTENSIONS, ACCESS_LOG_FILE,$/;"	e	enum:__anon3	file:
 SSL	src/lib/mongoose.c	/^typedef struct ssl_st SSL;$/;"	t	typeref:struct:ssl_st	file:
@@ -254,7 +282,10 @@ SYS2UNIX_TIME	src/lib/mongoose.c	73;"	d	file:
 S_ISDIR	mongoose/main.c	43;"	d	file:
 ServiceMain	mongoose/main.c	/^static void WINAPI ServiceMain(void) {$/;"	f	file:	signature:(void)
 TRUE	include/types.h	6;"	d
+TYPE_H	include/type.h	2;"	d
 TrayIcon	mongoose/main.c	/^static NOTIFYICONDATA TrayIcon;$/;"	v	file:
+USER_H	include/user.h	2;"	d
+USER_STR_SZ	include/protocol.h	26;"	d
 UriDumpInfo	mongoose/bindings/csharp/example.cs	/^    static private void UriDumpInfo(MongooseConnection conn, MongooseRequestInfo ri)$/;"	m	class:Program	file:	access:private	signature:(MongooseConnection conn, MongooseRequestInfo ri)
 UriHandler	mongoose/bindings/csharp/example.cs	/^	static private void UriHandler(MongooseConnection conn, MongooseRequestInfo ri) {$/;"	m	class:Program	file:	access:private	signature:(MongooseConnection conn, MongooseRequestInfo ri)
 VC	mongoose/Makefile	/^VC=	z:$/;"	m
@@ -282,6 +313,20 @@ __anon4::ext_len	src/lib/mongoose.c	/^  size_t ext_len;$/;"	m	struct:__anon4	fil
 __anon4::extension	src/lib/mongoose.c	/^  const char *extension;$/;"	m	struct:__anon4	file:	access:public
 __anon4::mime_type	src/lib/mongoose.c	/^  const char *mime_type;$/;"	m	struct:__anon4	file:	access:public
 __anon4::mime_type_len	src/lib/mongoose.c	/^  size_t mime_type_len;$/;"	m	struct:__anon4	file:	access:public
+__anon5::bdepth	src/event.c	/^    int bdepth;$/;"	m	struct:__anon5	file:	access:public
+__anon5::save_ptr	src/event.c	/^    char* save_ptr;$/;"	m	struct:__anon5	file:	access:public
+__anon6::name	include/session.h	/^      char name[33]   \/\/ Session names must be <33 characters long$/;"	m	struct:__anon6	access:public
+__anon7::a	include/protocol.h	/^    char* a;    \/\/ action$/;"	m	struct:__anon7	access:public
+__anon7::m	include/protocol.h	/^    char* m;    \/\/ message$/;"	m	struct:__anon7	access:public
+__anon7::reqtype	include/protocol.h	/^    reqtype_t reqtype;$/;"	m	struct:__anon7	access:public
+__anon7::s	include/protocol.h	/^    char* s;    \/\/ session$/;"	m	struct:__anon7	access:public
+__anon7::u	include/protocol.h	/^    char* u;    \/\/ user$/;"	m	struct:__anon7	access:public
+__anon8::message	include/event.h	/^    const char* message;$/;"	m	struct:__anon8	access:public
+__anon8::reg_count	include/event.h	/^    int reg_count;  \/\/ Number of registered subscribers.  When this becomes$/;"	m	struct:__anon8	access:public
+__anon8::reg_count_lock	include/event.h	/^    pthread_mutex_t reg_count_lock;$/;"	m	struct:__anon8	access:public
+__anon8::sender	include/event.h	/^    user_t* sender; \/\/ Pointer to the user who broadcasted the event$/;"	m	struct:__anon8	access:public
+__anon9::elem	include/user.h	/^    struct hash_elem elem;$/;"	m	struct:__anon9	typeref:struct:__anon9::hash_elem	access:public
+__anon9::id	include/user.h	/^    char id[USER_STR_SZ + 1];$/;"	m	struct:__anon9	access:public
 __del__	mongoose/bindings/python/mongoose.py	/^    def __del__(self):$/;"	m	class:Mongoose	file:	access:private
 __func__	src/lib/mongoose.c	82;"	d	file:
 __func__	src/lib/mongoose.c	86;"	d	file:
@@ -289,6 +334,7 @@ __init__	mongoose/bindings/python/mongoose.py	/^    def __init__(self, callback,
 __init__	mongoose/bindings/python/mongoose.py	/^    def __init__(self, mongoose, connection):$/;"	m	class:Connection	access:public
 _fields_	mongoose/bindings/python/mongoose.py	/^    _fields_ = [$/;"	v	class:mg_header
 _fields_	mongoose/bindings/python/mongoose.py	/^    _fields_ = [$/;"	v	class:mg_request_info
+a	include/protocol.h	/^    char* a;    \/\/ action$/;"	m	struct:__anon7	access:public
 accept_new_connection	src/lib/mongoose.c	/^static void accept_new_connection(const struct socket *listener,$/;"	f	file:	signature:(const struct socket *listener, struct mg_context *ctx)
 add_to_set	src/lib/mongoose.c	/^static void add_to_set(SOCKET fd, fd_set *set, int *max_fd) {$/;"	f	file:	signature:(SOCKET fd, fd_set *set, int *max_fd)
 addenv	src/lib/mongoose.c	/^static char *addenv(struct cgi_env_block *block, const char *fmt, ...) {$/;"	f	file:	signature:(struct cgi_env_block *block, const char *fmt, ...)
@@ -306,10 +352,15 @@ ajax_send_message	mongoose/examples/chat.c	/^static void ajax_send_message(struc
 authorize	mongoose/examples/chat.c	/^static void authorize(struct mg_connection *conn,$/;"	f	file:	signature:(struct mg_connection *conn, const struct mg_request_info *request_info)
 authorize	src/lib/mongoose.c	/^static int authorize(struct mg_connection *conn, FILE *fp) {$/;"	f	file:	signature:(struct mg_connection *conn, FILE *fp)
 authorize_url	mongoose/examples/chat.c	/^static const char *authorize_url = "\/authorize";$/;"	v	file:
+aux	include/lib/hash.h	/^    void* aux;$/;"	m	struct:hash	access:public
+aux	src/lib/hash.c	/^    void* aux;$/;"	m	struct:hash_find_data	file:	access:public
+bdepth	src/event.c	/^    int bdepth;$/;"	m	struct:__anon5	file:	access:public
 bin2str	src/lib/mongoose.c	/^static void bin2str(char *to, const unsigned char *p, size_t len) {$/;"	f	file:	signature:(char *to, const unsigned char *p, size_t len)
 birth_time	src/lib/mongoose.c	/^  time_t birth_time;          \/\/ Time connection was accepted$/;"	m	struct:mg_connection	file:	access:public
 bits	src/lib/mongoose.c	/^  uint32_t bits[2];$/;"	m	struct:MD5Context	file:	access:public
+bool	include/type.h	/^typedef char bool;$/;"	t
 broadcast	src/lib/mongoose.c	/^typedef struct {HANDLE signal, broadcast;} pthread_cond_t;$/;"	m	struct:__anon1	file:	access:public
+buckets	include/lib/hash.h	/^    struct list buckets[HASH_BUCKETS];$/;"	m	struct:hash	typeref:struct:hash::list	access:public
 buf	src/lib/mongoose.c	/^  char *buf;                  \/\/ Buffer for received data$/;"	m	struct:mg_connection	file:	access:public
 buf	src/lib/mongoose.c	/^  char buf[CGI_ENVIRONMENT_SIZE]; \/\/ Environment buffer$/;"	m	struct:cgi_env_block	file:	access:public
 buf	src/lib/mongoose.c	/^  uint32_t buf[4];$/;"	m	struct:MD5Context	file:	access:public
@@ -350,6 +401,8 @@ close_connection	src/lib/mongoose.c	/^static void close_connection(struct mg_con
 close_socket_gracefully	src/lib/mongoose.c	/^static void close_socket_gracefully(SOCKET sock) {$/;"	f	file:	signature:(SOCKET sock)
 closedir	src/lib/mongoose.c	/^static int closedir(DIR *dir) {$/;"	f	file:	signature:(DIR *dir)
 closesocket	src/lib/mongoose.c	189;"	d	file:
+cmp	src/lib/hash.c	/^    hash_compare_func* cmp;$/;"	m	struct:hash_find_data	file:	access:public
+cmp_func	include/lib/hash.h	/^    hash_compare_func* cmp_func;$/;"	m	struct:hash	access:public
 cnonce	src/lib/mongoose.c	/^  char *user, *uri, *cnonce, *response, *qop, *nc, *nonce;$/;"	m	struct:ah	file:	access:public
 compare_dir_entries	src/lib/mongoose.c	/^static int WINCDECL compare_dir_entries(const void *p1, const void *p2) {$/;"	f	file:	signature:(const void *p1, const void *p2)
 cond	src/lib/mongoose.c	/^  pthread_cond_t  cond;      \/\/ Condvar for tracking workers terminations$/;"	m	struct:mg_context	file:	access:public
@@ -378,6 +431,8 @@ de	src/lib/mongoose.c	/^struct de {$/;"	s	file:
 de::conn	src/lib/mongoose.c	/^  struct mg_connection *conn;$/;"	m	struct:de	typeref:struct:de::mg_connection	file:	access:public
 de::file_name	src/lib/mongoose.c	/^  char *file_name;$/;"	m	struct:de	file:	access:public
 de::st	src/lib/mongoose.c	/^  struct mgstat st;$/;"	m	struct:de	typeref:struct:de::mgstat	file:	access:public
+debug_backtrace	include/debug.h	/^void debug_backtrace (void);$/;"	p	signature:(void)
+debug_backtrace	src/debug.c	/^debug_backtrace (void)$/;"	f	signature:(void)
 delegates1	mongoose/bindings/csharp/mongoose.cs	/^    	private event MongooseCallback delegates1;$/;"	E	class:Mongoose	file:	access:private
 delegates2	mongoose/bindings/csharp/mongoose.cs	/^    	private event MongooseCallback2 delegates2;$/;"	E	class:Mongoose	file:	access:private
 die	mongoose/main.c	/^static void die(const char *fmt, ...) {$/;"	f	file:	signature:(const char *fmt, ...)
@@ -392,10 +447,16 @@ do_ssi_exec	src/lib/mongoose.c	/^static void do_ssi_exec(struct mg_connection *c
 do_ssi_include	src/lib/mongoose.c	/^static void do_ssi_include(struct mg_connection *conn, const char *ssi,$/;"	f	file:	signature:(struct mg_connection *conn, const char *ssi, char *tag, int include_level)
 document_root	mongoose/bindings/python/example.py	/^                           document_root='\/tmp',$/;"	v
 edit_config_file	mongoose/main.c	/^static void edit_config_file(void) {$/;"	f	file:	signature:(void)
+elem	include/lib/hash.h	/^    struct list_elem elem;$/;"	m	struct:hash_elem	typeref:struct:hash_elem::list_elem	access:public
+elem	include/user.h	/^    struct hash_elem elem;$/;"	m	struct:__anon9	typeref:struct:__anon9::hash_elem	access:public
 errno	src/lib/mongoose.c	65;"	d	file:
 event	mongoose/test/embed.c	/^  enum mg_event event;$/;"	m	struct:test_config	typeref:enum:test_config::mg_event	file:	access:public
 event_func_table	src/main.c	/^static mg_event_func_t event_func_table[4];$/;"	v	file:
 event_handler	mongoose/examples/chat.c	/^static void *event_handler(enum mg_event event,$/;"	f	file:	signature:(enum mg_event event, struct mg_connection *conn, const struct mg_request_info *request_info)
+event_init	include/event.h	/^void event_init (event_t*, user_t*, const char*);$/;"	p	signature:(event_t*, user_t*, const char*)
+event_init	src/event.c	/^event_init (event_t* e, user_t* user, const char* message)$/;"	f	signature:(event_t* e, user_t* user, const char* message)
+event_t	include/event.h	/^} event_t;$/;"	t	typeref:struct:__anon8
+events	src/event.c	/^static struct list events;$/;"	v	typeref:struct:list	file:
 exit_flag	mongoose/main.c	/^static int exit_flag;$/;"	v	file:
 expire	mongoose/examples/chat.c	/^  time_t expire;            \/\/ Expiration timestamp, UTC$/;"	m	struct:session	file:	access:public
 ext_len	src/lib/mongoose.c	/^  size_t ext_len;$/;"	m	struct:__anon4	file:	access:public
@@ -405,14 +466,18 @@ f	add_files.py	/^    f = open (src_filename, 'w')$/;"	v
 fail	mongoose/test/exploit.pl	/^sub fail(){$/;"	s
 fail	mongoose/test/test.pl	/^sub fail {$/;"	s
 fail	mongoose/test/test_all_build_flags.pl	/^sub fail {$/;"	s
+false	include/type.h	11;"	d
 fc	src/lib/mongoose.c	/^static struct mg_connection *fc(struct mg_context *ctx) {$/;"	f	file:	signature:(struct mg_context *ctx)
 fdopen	src/lib/mongoose.c	117;"	d	file:
 file_name	src/lib/mongoose.c	/^  char *file_name;$/;"	m	struct:de	file:	access:public
 fileno	src/lib/mongoose.c	124;"	d	file:
+find_in_list	src/lib/hash.c	/^find_in_list (struct list_elem* a, struct list_elem* b, void* aux)$/;"	f	signature:(struct list_elem* a, struct list_elem* b, void* aux)
+find_in_list	src/lib/hash.c	/^static int find_in_list (struct list_elem* a, struct list_elem* b, $/;"	p	file:	signature:(struct list_elem* a, struct list_elem* b, void* hash_func)
 flockfile	src/lib/mongoose.c	120;"	d	file:
 forward_body_data	src/lib/mongoose.c	/^static int forward_body_data(struct mg_connection *conn, FILE *fp,$/;"	f	file:	signature:(struct mg_connection *conn, FILE *fp, SOCKET sock, SSL *ssl)
 free_context	src/lib/mongoose.c	/^static void free_context(struct mg_context *ctx) {$/;"	f	file:	signature:(struct mg_context *ctx)
 fseeko	src/lib/mongoose.c	116;"	d	file:
+func	include/lib/hash.h	/^    hash_hash_func* func;$/;"	m	struct:hash	access:public
 func	mongoose/bindings/python/mongoose.py	/^            def func(event, connection, request_info):$/;"	f	function:Mongoose.__init__	access:public
 func	mongoose/test/embed.c	/^  void (*func)(struct mg_connection *, const struct mg_request_info *);$/;"	m	struct:test_config	file:	access:public
 function.pa	mongoose/examples/html/jquery.js	/^j.length;n<r;n++)for(k=0;k<u.length;k++){i=u[k];if(j[n].selector===i.selector){o=j[n].elem;f=null;if(i.preType==="mouseenter"||i.preType==="mouseleave")f=c(a.relatedTarget).closest(i.selector)[0];if(!f||f!==o)d.push({elem:o,handleObj:i})}}n=0;for(r=d.length;n<r;n++){j=d[n];a.currentTarget=j.elem;a.data=j.handleObj.data;a.handleObj=j.handleObj;if(j.handleObj.origHandler.apply(j.elem,e)===false){b=false;break}}return b}}function pa(a,b){return"live."+(a&&a!=="*"?a+".":"")+b.replace(\/\\.\/g,"`").replace(\/ \/g,$/;"	f
@@ -433,6 +498,7 @@ get_request_len	src/lib/mongoose.c	/^static int get_request_len(const char *buf,
 get_session	mongoose/examples/chat.c	/^static struct session *get_session(const struct mg_connection *conn) {$/;"	f	file:	signature:(const struct mg_connection *conn)
 get_var	mongoose/bindings/csharp/mongoose.cs	/^	public string get_var(string header_name) {$/;"	m	class:MongooseConnection	access:public	signature:(string header_name)
 get_var	mongoose/bindings/python/mongoose.py	/^    def get_var(self, data, name):$/;"	m	class:Connection	access:public
+get_var	src/protocol.c	/^get_var (const struct mg_request_info* info, const char* request_body,$/;"	f	file:	signature:(const struct mg_request_info* info, const char* request_body, const char* var, char* dst, size_t dst_len)
 h	add_files.py	/^    h = open ("program_header.txt", 'r')$/;"	v
 hStatus	mongoose/main.c	/^static SERVICE_STATUS_HANDLE hStatus;$/;"	v	file:
 handle	src/lib/mongoose.c	/^  HANDLE   handle;$/;"	m	struct:DIR	file:	access:public
@@ -443,6 +509,34 @@ handle_jsonp	mongoose/examples/chat.c	/^static int handle_jsonp(struct mg_connec
 handle_proxy_request	src/lib/mongoose.c	/^static void handle_proxy_request(struct mg_connection *conn) {$/;"	f	file:	signature:(struct mg_connection *conn)
 handle_request	src/lib/mongoose.c	/^static void handle_request(struct mg_connection *conn) {$/;"	f	file:	signature:(struct mg_connection *conn)
 handle_ssi_file_request	src/lib/mongoose.c	/^static void handle_ssi_file_request(struct mg_connection *conn,$/;"	f	file:	signature:(struct mg_connection *conn, const char *path)
+hash	include/lib/hash.h	/^struct hash$/;"	s
+hash::aux	include/lib/hash.h	/^    void* aux;$/;"	m	struct:hash	access:public
+hash::buckets	include/lib/hash.h	/^    struct list buckets[HASH_BUCKETS];$/;"	m	struct:hash	typeref:struct:hash::list	access:public
+hash::cmp_func	include/lib/hash.h	/^    hash_compare_func* cmp_func;$/;"	m	struct:hash	access:public
+hash::func	include/lib/hash.h	/^    hash_hash_func* func;$/;"	m	struct:hash	access:public
+hash_addr	include/lib/hash.h	/^uint32 hash_addr (struct hash_elem* addr);$/;"	p	signature:(struct hash_elem* addr)
+hash_addr	src/lib/hash.c	/^hash_addr (struct hash_elem* addr)$/;"	f	signature:(struct hash_elem* addr)
+hash_compare_func	include/lib/hash.h	/^typedef int hash_compare_func (struct hash_elem* a, struct hash_elem* b,$/;"	t
+hash_elem	include/lib/hash.h	/^struct hash_elem$/;"	s
+hash_elem::elem	include/lib/hash.h	/^    struct list_elem elem;$/;"	m	struct:hash_elem	typeref:struct:hash_elem::list_elem	access:public
+hash_find	include/lib/hash.h	/^struct hash_elem* hash_find (struct hash* hash, struct hash_elem* e, $/;"	p	signature:(struct hash* hash, struct hash_elem* e, void* aux)
+hash_find	src/lib/hash.c	/^hash_find (struct hash* hash, struct hash_elem* elem, void* aux)$/;"	f	signature:(struct hash* hash, struct hash_elem* elem, void* aux)
+hash_find_data	src/lib/hash.c	/^struct hash_find_data$/;"	s	file:
+hash_find_data::aux	src/lib/hash.c	/^    void* aux;$/;"	m	struct:hash_find_data	file:	access:public
+hash_find_data::cmp	src/lib/hash.c	/^    hash_compare_func* cmp;$/;"	m	struct:hash_find_data	file:	access:public
+hash_hash_func	include/lib/hash.h	/^typedef uint32 hash_hash_func (struct hash_elem* e);$/;"	t
+hash_init	include/lib/hash.h	/^void hash_init (struct hash* hash, $/;"	p	signature:(struct hash* hash, hash_hash_func* hash_func, hash_compare_func* compare_func)
+hash_init	src/lib/hash.c	/^void hash_init (struct hash* hash, $/;"	f	signature:(struct hash* hash, hash_hash_func* hash_func, hash_compare_func* compare_func)
+hash_insert	include/lib/hash.h	/^void hash_insert (struct hash* hash, struct hash_elem* e);$/;"	p	signature:(struct hash* hash, struct hash_elem* e)
+hash_insert	src/lib/hash.c	/^hash_insert (struct hash* hash, struct hash_elem* e)$/;"	f	signature:(struct hash* hash, struct hash_elem* e)
+hash_print	include/lib/hash.h	/^void hash_print (struct hash* hash, hash_print_func* func);$/;"	p	signature:(struct hash* hash, hash_print_func* func)
+hash_print	src/lib/hash.c	/^hash_print (struct hash* hash, hash_print_func* func)$/;"	f	signature:(struct hash* hash, hash_print_func* func)
+hash_print_func	include/lib/hash.h	/^typedef void hash_print_func (struct list_elem* e);$/;"	t
+hash_remove	include/lib/hash.h	/^void hash_remove (struct hash_elem* e);$/;"	p	signature:(struct hash_elem* e)
+hash_remove	src/lib/hash.c	/^hash_remove (struct hash_elem* e)$/;"	f	signature:(struct hash_elem* e)
+hash_string	include/lib/hash.h	/^uint32 hash_string (struct hash_elem* str);$/;"	p	signature:(struct hash_elem* str)
+hash_string	src/lib/hash.c	/^hash_string (struct hash_elem* str)$/;"	f	signature:(struct hash_elem* str)
+head	include/lib/list.h	/^    struct list_elem head;$/;"	m	struct:list	typeref:struct:list::list_elem	access:public
 header	add_files.py	/^    header = h.read ()$/;"	v
 header	mongoose/test/exploit.pl	/^sub header()$/;"	s
 header_define_str	add_files.py	/^                         "\\n\\n\\n\\n#endif  \/\/ " + header_define_str$/;"	v
@@ -454,16 +548,24 @@ header_filename	add_files.py	/^    header_filename = sys.argv[1] + ".h"$/;"	v
 header_header	add_files.py	/^    header_header = string.replace (header, "${file_name}", header_filename)$/;"	v
 header_header	add_files.py	/^    header_header = string.replace (header_header, "${date}", datestr)$/;"	v
 header_include_str	add_files.py	/^    header_include_str = ""$/;"	v
+hexdump	include/debug.h	/^void hexdump (void* start, uint32 sz);$/;"	p	signature:(void* start, uint32 sz)
+hexdump	src/debug.c	/^hexdump (void* _start, uint32 sz)$/;"	f	signature:(void* _start, uint32 sz)
 http_500_error	src/lib/mongoose.c	/^static const char *http_500_error = "Internal Server Error";$/;"	v	file:
 http_headers	include/lib/mongoose.h	/^  } http_headers[64];    \/\/ Maximum 64 headers$/;"	m	struct:mg_request_info	typeref:struct:mg_request_info::mg_header	access:public
 http_headers	mongoose/bindings/csharp/mongoose.cs	/^	[MarshalAs(UnmanagedType.ByValArray,SizeConst=64)] public MongooseHeader[] http_headers;$/;"	f	struct:MongooseRequestInfo	access:public
 http_version	include/lib/mongoose.h	/^  char *http_version;    \/\/ E.g. "1.0", "1.1"$/;"	m	struct:mg_request_info	access:public
 http_version	mongoose/bindings/csharp/mongoose.cs	/^	public string	http_version;$/;"	f	struct:MongooseRequestInfo	access:public
+id	include/user.h	/^    char id[USER_STR_SZ + 1];$/;"	m	struct:__anon9	access:public
 id	mongoose/examples/chat.c	/^  long id;                     \/\/ Message ID$/;"	m	struct:message	file:	access:public
 in	src/lib/mongoose.c	/^  unsigned char in[64];$/;"	m	struct:MD5Context	file:	access:public
 info	src/lib/mongoose.c	/^  WIN32_FIND_DATAW info;$/;"	m	struct:DIR	file:	access:public
+init_events	include/event.h	/^int init_events (const char* message, user_t*);$/;"	p	signature:(const char* message, user_t*)
+init_events	src/event.c	/^init_events (const char* message, user_t* user)$/;"	f	signature:(const char* message, user_t* user)
 init_request_handler	include/request_handler.h	/^bool init_request_handler ();$/;"	p	signature:()
 init_server_name	mongoose/main.c	/^static void init_server_name(void) {$/;"	f	file:	signature:(void)
+init_session_handler	include/session.h	/^void init_session_handler ();$/;"	p	signature:()
+init_user_index	include/user.h	/^bool init_user_index ();$/;"	p	signature:()
+init_user_index	src/user.c	/^init_user_index ()$/;"	f
 int64_t	src/lib/mongoose.c	/^typedef __int64   int64_t;$/;"	t	file:
 is_authorized	mongoose/examples/chat.c	/^static int is_authorized(const struct mg_connection *conn,$/;"	f	file:	signature:(const struct mg_connection *conn, const struct mg_request_info *request_info)
 is_authorized_for_put	src/lib/mongoose.c	/^static int is_authorized_for_put(struct mg_connection *conn) {$/;"	f	file:	signature:(struct mg_connection *conn)
@@ -474,12 +576,61 @@ is_ssl	include/lib/mongoose.h	/^  int is_ssl;            \/\/ 1 if SSL-ed, 0 if 
 is_ssl	src/lib/mongoose.c	/^  int is_ssl;           \/\/ Is socket SSL-ed$/;"	m	struct:socket	file:	access:public
 is_valid_http_method	src/lib/mongoose.c	/^static int is_valid_http_method(const char *method) {$/;"	f	file:	signature:(const char *method)
 isbyte	src/lib/mongoose.c	/^static int isbyte(int n) {$/;"	f	file:	signature:(int n)
+json_parse_state_t	src/event.c	/^} json_parse_state_t;$/;"	t	typeref:struct:__anon5	file:
 kill	src/lib/mongoose.c	/^static int kill(pid_t pid, int sig_num) {$/;"	f	file:	signature:(pid_t pid, int sig_num)
 kill_spawned_child	mongoose/test/test.pl	/^sub kill_spawned_child {$/;"	s
 last_message_id	mongoose/examples/chat.c	/^static long last_message_id;$/;"	v	file:
 len	src/lib/mongoose.c	/^  int len; \/\/ Space taken$/;"	m	struct:cgi_env_block	file:	access:public
 len	src/lib/mongoose.c	/^  size_t len;$/;"	m	struct:vec	file:	access:public
 len	src/lib/mongoose.c	/^  socklen_t len;$/;"	m	struct:usa	file:	access:public
+list	include/lib/list.h	/^struct list$/;"	s
+list::head	include/lib/list.h	/^    struct list_elem head;$/;"	m	struct:list	typeref:struct:list::list_elem	access:public
+list::tail	include/lib/list.h	/^    struct list_elem tail;$/;"	m	struct:list	typeref:struct:list::list_elem	access:public
+list_back	include/lib/list.h	/^struct list_elem* list_back (struct list*);$/;"	p	signature:(struct list*)
+list_back	src/lib/list.c	/^list_back (struct list* list)$/;"	f	signature:(struct list* list)
+list_begin	include/lib/list.h	/^struct list_elem* list_begin (struct list*);$/;"	p	signature:(struct list*)
+list_begin	src/lib/list.c	/^list_begin (struct list* list)$/;"	f	signature:(struct list* list)
+list_compare_func	include/lib/list.h	/^    int list_compare_func (struct list_elem* a, struct list_elem* b,$/;"	t
+list_elem	include/lib/list.h	/^struct list_elem$/;"	s
+list_elem::next	include/lib/list.h	/^    struct list_elem* next;$/;"	m	struct:list_elem	typeref:struct:list_elem::list_elem	access:public
+list_elem::prev	include/lib/list.h	/^    struct list_elem* prev;$/;"	m	struct:list_elem	typeref:struct:list_elem::list_elem	access:public
+list_empty	include/lib/list.h	/^bool list_empty (struct list*);$/;"	p	signature:(struct list*)
+list_empty	src/lib/list.c	/^list_empty (struct list* list)$/;"	f	signature:(struct list* list)
+list_end	include/lib/list.h	/^struct list_elem* list_end (struct list*);$/;"	p	signature:(struct list*)
+list_end	src/lib/list.c	/^list_end (struct list* list)$/;"	f	signature:(struct list* list)
+list_find	include/lib/list.h	/^struct list_elem* list_find (struct list*, struct list_elem*,$/;"	p	signature:(struct list*, struct list_elem*, list_compare_func*, void*)
+list_find	src/lib/list.c	/^list_find (struct list* list, struct list_elem* elem, $/;"	f	signature:(struct list* list, struct list_elem* elem, list_compare_func* func, void* aux)
+list_front	include/lib/list.h	/^struct list_elem* list_front (struct list*);$/;"	p	signature:(struct list*)
+list_front	src/lib/list.c	/^list_front (struct list* list)$/;"	f	signature:(struct list* list)
+list_head	include/lib/list.h	/^struct list_elem* list_head (struct list*);$/;"	p	signature:(struct list*)
+list_head	src/lib/list.c	/^list_head (struct list* list)$/;"	f	signature:(struct list* list)
+list_init	include/lib/list.h	/^void list_init (struct list*);$/;"	p	signature:(struct list*)
+list_init	src/lib/list.c	/^list_init (struct list* list)$/;"	f	signature:(struct list* list)
+list_insert_after	include/lib/list.h	/^void list_insert_after (struct list_elem* elem, struct list_elem* data);$/;"	p	signature:(struct list_elem* elem, struct list_elem* data)
+list_insert_after	src/lib/list.c	/^list_insert_after (struct list_elem* elem, struct list_elem* data)$/;"	f	signature:(struct list_elem* elem, struct list_elem* data)
+list_insert_before	include/lib/list.h	/^void list_insert_before (struct list_elem* elem, struct list_elem* data);$/;"	p	signature:(struct list_elem* elem, struct list_elem* data)
+list_insert_before	src/lib/list.c	/^list_insert_before (struct list_elem* elem, struct list_elem* data)$/;"	f	signature:(struct list_elem* elem, struct list_elem* data)
+list_insert_ordered	include/lib/list.h	/^void list_insert_ordered (struct list*, struct list_elem*, $/;"	p	signature:(struct list*, struct list_elem*, list_compare_func*, void*)
+list_insert_ordered	src/lib/list.c	/^list_insert_ordered (struct list* list, struct list_elem* elem, $/;"	f	signature:(struct list* list, struct list_elem* elem, list_compare_func* func, void* aux)
+list_next	include/lib/list.h	/^struct list_elem* list_next (struct list_elem*);$/;"	p	signature:(struct list_elem*)
+list_next	src/lib/list.c	/^list_next (struct list_elem* e)$/;"	f	signature:(struct list_elem* e)
+list_pop_back	include/lib/list.h	/^struct list_elem* list_pop_back (struct list*);$/;"	p	signature:(struct list*)
+list_pop_back	src/lib/list.c	/^list_pop_back (struct list* list)$/;"	f	signature:(struct list* list)
+list_pop_front	include/lib/list.h	/^struct list_elem* list_pop_front (struct list*);$/;"	p	signature:(struct list*)
+list_pop_front	src/lib/list.c	/^list_pop_front (struct list* list)$/;"	f	signature:(struct list* list)
+list_prev	include/lib/list.h	/^struct list_elem* list_prev (struct list_elem*);$/;"	p	signature:(struct list_elem*)
+list_prev	src/lib/list.c	/^list_prev (struct list_elem* e)$/;"	f	signature:(struct list_elem* e)
+list_print	include/lib/list.h	/^void list_print (struct list*, list_print_func* func);$/;"	p	signature:(struct list*, list_print_func* func)
+list_print	src/lib/list.c	/^list_print (struct list* list, list_print_func* func)$/;"	f	signature:(struct list* list, list_print_func* func)
+list_print_func	include/lib/list.h	/^typedef void list_print_func (struct list_elem* e);$/;"	t
+list_push_back	include/lib/list.h	/^void list_push_back (struct list*, struct list_elem*);$/;"	p	signature:(struct list*, struct list_elem*)
+list_push_back	src/lib/list.c	/^list_push_back (struct list* list, struct list_elem* e)$/;"	f	signature:(struct list* list, struct list_elem* e)
+list_push_front	include/lib/list.h	/^void list_push_front (struct list*, struct list_elem*);$/;"	p	signature:(struct list*, struct list_elem*)
+list_push_front	src/lib/list.c	/^list_push_front (struct list* list, struct list_elem* e)$/;"	f	signature:(struct list* list, struct list_elem* e)
+list_remove	include/lib/list.h	/^void list_remove (struct list_elem*);$/;"	p	signature:(struct list_elem*)
+list_remove	src/lib/list.c	/^list_remove (struct list_elem* elem)$/;"	f	signature:(struct list_elem* elem)
+list_tail	include/lib/list.h	/^struct list_elem* list_tail (struct list*);$/;"	p	signature:(struct list*)
+list_tail	src/lib/list.c	/^list_tail (struct list* list)$/;"	f	signature:(struct list* list)
 listening_ports	mongoose/bindings/python/example.py	/^                           listening_ports='8080')$/;"	v
 listening_sockets	src/lib/mongoose.c	/^  struct socket *listening_sockets;$/;"	m	struct:mg_context	typeref:struct:mg_context::socket	file:	access:public
 load_dll	src/lib/mongoose.c	/^static int load_dll(struct mg_context *ctx, const char *dll_name,$/;"	f	file:	signature:(struct mg_context *ctx, const char *dll_name, struct ssl_func *sw)
@@ -488,8 +639,11 @@ log_access	src/lib/mongoose.c	/^static void log_access(const struct mg_connectio
 log_header	src/lib/mongoose.c	/^static void log_header(const struct mg_connection *conn, const char *header,$/;"	f	file:	signature:(const struct mg_connection *conn, const char *header, FILE *fp)
 log_message	include/lib/mongoose.h	/^  char *log_message;     \/\/ Mongoose error log message$/;"	m	struct:mg_request_info	access:public
 login_url	mongoose/examples/chat.c	/^static const char *login_url = "\/login.html";$/;"	v	file:
+lookup_user	include/user.h	/^user_t* lookup_user (const char* id);$/;"	p	signature:(const char* id)
+lookup_user	src/user.c	/^lookup_user (const char* id)$/;"	f	signature:(const char* id)
 lowercase	src/lib/mongoose.c	/^static int lowercase(const char *s) {$/;"	f	file:	signature:(const char *s)
 lsa	src/lib/mongoose.c	/^  struct usa lsa;       \/\/ Local socket address$/;"	m	struct:socket	typeref:struct:socket::usa	file:	access:public
+m	include/protocol.h	/^    char* m;    \/\/ message$/;"	m	struct:__anon7	access:public
 main	mongoose/examples/chat.c	/^int main(void) {$/;"	f	signature:(void)
 main	mongoose/main.c	/^int main(int argc, char *argv[]) {$/;"	f	signature:(int argc, char *argv[])
 main	mongoose/test/embed.c	/^int main(void) {$/;"	f	signature:(void)
@@ -497,6 +651,7 @@ main	src/main.c	/^main (int argc, char** argv)$/;"	f	signature:(int argc, char**
 manage_service	mongoose/main.c	/^static int manage_service(int action) {$/;"	f	file:	signature:(int action)
 master_thread	src/lib/mongoose.c	/^static void master_thread(struct mg_context *ctx) {$/;"	f	file:	signature:(struct mg_context *ctx)
 match_extension	src/lib/mongoose.c	/^static int match_extension(const char *path, const char *ext_list) {$/;"	f	file:	signature:(const char *path, const char *ext_list)
+message	include/event.h	/^    const char* message;$/;"	m	struct:__anon8	access:public
 message	mongoose/examples/chat.c	/^struct message {$/;"	s	file:
 message::id	mongoose/examples/chat.c	/^  long id;                     \/\/ Message ID$/;"	m	struct:message	file:	access:public
 message::text	mongoose/examples/chat.c	/^  char text[MAX_MESSAGE_LEN];  \/\/ Message text$/;"	m	struct:message	file:	access:public
@@ -639,11 +794,13 @@ mutex	src/lib/mongoose.c	/^  pthread_mutex_t mutex;     \/\/ Protects (max|num)_
 my_strlcpy	mongoose/examples/chat.c	/^static void my_strlcpy(char *dst, const char *src, size_t len) {$/;"	f	file:	signature:(char *dst, const char *src, size_t len)
 na	mongoose/examples/html/jquery.js	/^e(a[0],b):w}function J(){return(new Date).getTime()}function Y(){return false}function Z(){return true}function na(a,b,d){d[0].type=a;return c.event.handle.apply(b,d)}function oa(a){var b,d=[],f=[],e=arguments,j,i,o,k,n,r;i=c.data(this,"events");if(!(a.liveFired===this||!i||!i.live||a.button&&a.type==="click")){a.liveFired=this;var u=i.live.slice(0);for(k=0;k<u.length;k++){i=u[k];i.origType.replace(O,"")===a.type?f.push(i.selector):u.splice(k--,1)}j=c(a.target).closest(f,a.currentTarget);n=0;for(r=$/;"	f
 name	include/lib/mongoose.h	/^    char *name;          \/\/ HTTP header name$/;"	m	struct:mg_request_info::mg_header	access:public
+name	include/session.h	/^      char name[33]   \/\/ Session names must be <33 characters long$/;"	m	struct:__anon6	access:public
 name	mongoose/bindings/csharp/mongoose.cs	/^	public IntPtr	name;		\/\/ Using IntPtr here because if we use strings here,$/;"	f	struct:MongooseHeader	access:public
 name	src/lib/mongoose.c	/^  const char *name;   \/\/ SSL function name$/;"	m	struct:ssl_func	file:	access:public
 nc	src/lib/mongoose.c	/^  char *user, *uri, *cnonce, *response, *qop, *nc, *nonce;$/;"	m	struct:ah	file:	access:public
 new_message	mongoose/examples/chat.c	/^static struct message *new_message(void) {$/;"	f	file:	signature:(void)
 new_session	mongoose/examples/chat.c	/^static struct session *new_session(void) {$/;"	f	file:	signature:(void)
+next	include/lib/list.h	/^    struct list_elem* next;$/;"	m	struct:list_elem	typeref:struct:list_elem::list_elem	access:public
 next	src/lib/mongoose.c	/^  struct socket *next;  \/\/ Linkage$/;"	m	struct:socket	typeref:struct:socket::socket	file:	access:public
 next_option	src/lib/mongoose.c	/^static const char *next_option(const char *list, struct vec *val,$/;"	f	file:	signature:(const char *list, struct vec *val, struct vec *eq_val)
 nonce	src/lib/mongoose.c	/^  char *user, *uri, *cnonce, *response, *qop, *nc, *nonce;$/;"	m	struct:ah	file:	access:public
@@ -660,14 +817,16 @@ on_windows	mongoose/test/test.pl	/^sub on_windows { $^O =~ \/win32\/i; }$/;"	s
 open_auth_file	src/lib/mongoose.c	/^static FILE *open_auth_file(struct mg_connection *conn, const char *path) {$/;"	f	file:	signature:(struct mg_connection *conn, const char *path)
 opendir	src/lib/mongoose.c	/^static DIR * opendir(const char *name) {$/;"	f	file:	signature:(const char *name)
 options	mongoose/examples/chat.c	/^static const char *options[] = {$/;"	v	file:
-options	src/main.c	/^static const char** options = NULL;$/;"	v	file:
+options	src/main.c	/^static const char* options[] = {$/;"	v	file:
 os	add_files.py	/^import os$/;"	i
 os	make_dirs.py	/^import os$/;"	i
 os	mongoose/bindings/python/mongoose.py	/^import os$/;"	i
 parse_auth_header	src/lib/mongoose.c	/^static int parse_auth_header(struct mg_connection *conn, char *buf,$/;"	f	file:	signature:(struct mg_connection *conn, char *buf, size_t buf_size, struct ah *ah)
 parse_date_string	src/lib/mongoose.c	/^static time_t parse_date_string(const char *s) {$/;"	f	file:	signature:(const char *s)
+parse_http_body	src/lib/mongoose.c	/^static void parse_http_body(char **buf, struct mg_request_info *ri) {$/;"	f	file:	signature:(char **buf, struct mg_request_info *ri)
 parse_http_headers	src/lib/mongoose.c	/^static void parse_http_headers(char **buf, struct mg_request_info *ri) {$/;"	f	file:	signature:(char **buf, struct mg_request_info *ri)
 parse_http_request	src/lib/mongoose.c	/^static int parse_http_request(char *buf, struct mg_request_info *ri) {$/;"	f	file:	signature:(char *buf, struct mg_request_info *ri)
+parse_json_events	src/event.c	/^parse_json_events (char* message, json_parse_state_t* state)$/;"	f	file:	signature:(char* message, json_parse_state_t* state)
 parse_port_string	src/lib/mongoose.c	/^static int parse_port_string(const struct vec *vec, struct socket *so) {$/;"	f	file:	signature:(const struct vec *vec, struct socket *so)
 parse_range_header	src/lib/mongoose.c	/^static int parse_range_header(const char *header, int64_t *a, int64_t *b) {$/;"	f	file:	signature:(const char *header, int64_t *a, int64_t *b)
 parse_url	src/lib/mongoose.c	/^static int parse_url(const char *url, char *host, int *port) {$/;"	f	file:	signature:(const char *url, char *host, int *port)
@@ -679,11 +838,15 @@ popen	src/lib/mongoose.c	111;"	d	file:
 post_data	mongoose/bindings/csharp/mongoose.cs	/^	public IntPtr	post_data;$/;"	f	struct:MongooseRequestInfo	access:public
 post_data_len	mongoose/bindings/csharp/mongoose.cs	/^	public int	post_data_len;$/;"	f	struct:MongooseRequestInfo	access:public
 prepare_cgi_environment	src/lib/mongoose.c	/^static void prepare_cgi_environment(struct mg_connection *conn,$/;"	f	file:	signature:(struct mg_connection *conn, const char *prog, struct cgi_env_block *blk)
+prev	include/lib/list.h	/^    struct list_elem* prev;$/;"	m	struct:list_elem	typeref:struct:list_elem::list_elem	access:public
 print_dir_entry	src/lib/mongoose.c	/^static void print_dir_entry(struct de *de) {$/;"	f	file:	signature:(struct de *de)
 printf	mongoose/bindings/python/mongoose.py	/^    def printf(self, fmt, *args):$/;"	m	class:Connection	access:public
 process_command_line_arguments	mongoose/main.c	/^static void process_command_line_arguments(char *argv[], char **options) {$/;"	f	file:	signature:(char *argv[], char **options)
 process_new_connection	src/lib/mongoose.c	/^static void process_new_connection(struct mg_connection *conn) {$/;"	f	file:	signature:(struct mg_connection *conn)
 produce_socket	src/lib/mongoose.c	/^static void produce_socket(struct mg_context *ctx, const struct socket *sp) {$/;"	f	file:	signature:(struct mg_context *ctx, const struct socket *sp)
+protocol_eval	include/protocol.h	/^reqtype_t protocol_eval (protocol_info_t*, const char*, $/;"	p	signature:(protocol_info_t*, const char*, const struct mg_request_info*)
+protocol_eval	src/protocol.c	/^protocol_eval (protocol_info_t* pinfo, const char* request_body,$/;"	f	signature:(protocol_info_t* pinfo, const char* request_body, const struct mg_request_info* rinfo)
+protocol_info_t	include/protocol.h	/^} protocol_info_t;$/;"	t	typeref:struct:__anon7
 pthread_cond_broadcast	src/lib/mongoose.c	/^static int pthread_cond_broadcast(pthread_cond_t *cv) {$/;"	f	file:	signature:(pthread_cond_t *cv)
 pthread_cond_destroy	src/lib/mongoose.c	/^static int pthread_cond_destroy(pthread_cond_t *cv) {$/;"	f	file:	signature:(pthread_cond_t *cv)
 pthread_cond_init	src/lib/mongoose.c	/^static int pthread_cond_init(pthread_cond_t *cv, const void *unused) {$/;"	f	file:	signature:(pthread_cond_t *cv, const void *unused)
@@ -721,6 +884,8 @@ read_request	src/lib/mongoose.c	/^static int read_request(FILE *fp, SOCKET sock,
 readdir	src/lib/mongoose.c	/^struct dirent * readdir(DIR *dir) {$/;"	f	signature:(DIR *dir)
 redirect_to_login	mongoose/examples/chat.c	/^static void redirect_to_login(struct mg_connection *conn,$/;"	f	file:	signature:(struct mg_connection *conn, const struct mg_request_info *request_info)
 redirect_to_ssl	mongoose/examples/chat.c	/^static void redirect_to_ssl(struct mg_connection *conn,$/;"	f	file:	signature:(struct mg_connection *conn, const struct mg_request_info *request_info)
+reg_count	include/event.h	/^    int reg_count;  \/\/ Number of registered subscribers.  When this becomes$/;"	m	struct:__anon8	access:public
+reg_count_lock	include/event.h	/^    pthread_mutex_t reg_count_lock;$/;"	m	struct:__anon8	access:public
 register_request	include/request_handler.h	/^void register_request (reqest_t*);$/;"	p	signature:(reqest_t*)
 remote_ip	include/lib/mongoose.h	/^  long remote_ip;        \/\/ Client's IP address$/;"	m	struct:mg_request_info	access:public
 remote_ip	mongoose/bindings/csharp/mongoose.cs	/^	public int	remote_ip; \/\/int to match the 32bit declaration in c$/;"	f	struct:MongooseRequestInfo	access:public
@@ -730,6 +895,9 @@ remote_user	include/lib/mongoose.h	/^  char *remote_user;     \/\/ Authenticated
 remote_user	mongoose/bindings/csharp/mongoose.cs	/^	public string	remote_user;$/;"	f	struct:MongooseRequestInfo	access:public
 remove_double_dots_and_double_slashes	src/lib/mongoose.c	/^static void remove_double_dots_and_double_slashes(char *s) {$/;"	f	file:	signature:(char *s)
 req	mongoose/test/test.pl	/^sub req {$/;"	s
+reqtype	include/protocol.h	/^    reqtype_t reqtype;$/;"	m	struct:__anon7	access:public
+reqtype	include/protocol.h	/^typedef enum reqtype {$/;"	g
+reqtype_t	include/protocol.h	/^} reqtype_t;$/;"	t	typeref:enum:reqtype
 request	include/request_handler.h	/^typedef struct request  {$/;"	s
 request_info	src/lib/mongoose.c	/^  struct mg_request_info request_info;$/;"	m	struct:mg_connection	typeref:struct:mg_connection::mg_request_info	file:	access:public
 request_init	include/request_handler.h	/^bool request_init (request_t*, struct mg_connection*, struct mg_request_info*);$/;"	p	signature:(request_t*, struct mg_connection*, struct mg_request_info*)
@@ -737,13 +905,16 @@ request_len	src/lib/mongoose.c	/^  int request_len;            \/\/ Size of the 
 request_method	include/lib/mongoose.h	/^  char *request_method;  \/\/ "GET", "POST", etc$/;"	m	struct:mg_request_info	access:public
 request_method	mongoose/bindings/csharp/mongoose.cs	/^	public string	request_method;$/;"	f	struct:MongooseRequestInfo	access:public
 request_t	include/request_handler.h	/^} request_t;$/;"	t	typeref:struct:request
+require	include/protocol.h	46;"	d
 reset_per_request_attributes	src/lib/mongoose.c	/^static void reset_per_request_attributes(struct mg_connection *conn) {$/;"	f	file:	signature:(struct mg_connection *conn)
 response	src/lib/mongoose.c	/^  char *user, *uri, *cnonce, *response, *qop, *nc, *nonce;$/;"	m	struct:ah	file:	access:public
 response_header	src/main.c	/^static const char* response_header = $/;"	v	file:
 result	src/lib/mongoose.c	/^  struct dirent  result;$/;"	m	struct:DIR	typeref:struct:DIR::dirent	file:	access:public
 rsa	src/lib/mongoose.c	/^  struct usa rsa;       \/\/ Remote socket address$/;"	m	struct:socket	typeref:struct:socket::usa	file:	access:public
 rwlock	mongoose/examples/chat.c	/^static pthread_rwlock_t rwlock = PTHREAD_RWLOCK_INITIALIZER;$/;"	v	file:
+s	include/protocol.h	/^    char* s;    \/\/ session$/;"	m	struct:__anon7	access:public
 sa	src/lib/mongoose.c	/^    struct sockaddr sa;$/;"	m	union:usa::__anon2	typeref:struct:usa::__anon2::sockaddr	file:	access:public
+save_ptr	src/event.c	/^    char* save_ptr;$/;"	m	struct:__anon5	file:	access:public
 sdup	mongoose/main.c	/^static char *sdup(const char *str) {$/;"	f	file:	signature:(const char *str)
 send_authorization_request	src/lib/mongoose.c	/^static void send_authorization_request(struct mg_connection *conn) {$/;"	f	file:	signature:(struct mg_connection *conn)
 send_file_data	src/lib/mongoose.c	/^static void send_file_data(struct mg_connection *conn, FILE *fp, int64_t len) {$/;"	f	file:	signature:(struct mg_connection *conn, FILE *fp, int64_t len)
@@ -751,6 +922,7 @@ send_http_error	src/lib/mongoose.c	/^static void send_http_error(struct mg_conne
 send_server_message	mongoose/examples/chat.c	/^static void send_server_message(const char *fmt, ...) {$/;"	f	file:	signature:(const char *fmt, ...)
 send_ssi_file	src/lib/mongoose.c	/^static void send_ssi_file(struct mg_connection *, const char *, FILE *, int);$/;"	p	file:	signature:(struct mg_connection *, const char *, FILE *, int)
 send_ssi_file	src/lib/mongoose.c	/^static void send_ssi_file(struct mg_connection *conn, const char *path,$/;"	f	file:	signature:(struct mg_connection *conn, const char *path, FILE *fp, int include_level)
+sender	include/event.h	/^    user_t* sender; \/\/ Pointer to the user who broadcasted the event$/;"	m	struct:__anon8	access:public
 server	mongoose/bindings/python/example.py	/^server = mongoose.Mongoose(EventHandler,$/;"	v
 server_name	mongoose/main.c	/^static char server_name[40];        \/\/ Set by init_server_name()$/;"	v	file:
 service_magic_argument	mongoose/main.c	/^static const char *service_magic_argument = "--";$/;"	v	file:
@@ -779,7 +951,11 @@ show_usage_and_exit	mongoose/main.c	/^static void show_usage_and_exit(void) {$/;
 signal	src/lib/mongoose.c	/^typedef struct {HANDLE signal, broadcast;} pthread_cond_t;$/;"	m	struct:__anon1	file:	access:public
 signal_handler	mongoose/main.c	/^static void WINCDECL signal_handler(int sig_num) {$/;"	f	file:	signature:(int sig_num)
 sin	src/lib/mongoose.c	/^    struct sockaddr_in sin;$/;"	m	union:usa::__anon2	typeref:struct:usa::__anon2::sockaddr_in	file:	access:public
+sint16	include/type.h	/^typedef             short sint16;$/;"	t
+sint32	include/type.h	/^typedef             int sint32;$/;"	t
+sint8	include/type.h	/^typedef             char sint8;$/;"	t
 size	src/lib/mongoose.c	/^  int64_t size;      \/\/ File size$/;"	m	struct:mgstat	file:	access:public
+size_t	include/type.h	5;"	d
 skip	src/lib/mongoose.c	/^static char *skip(char **buf, const char *delimiters) {$/;"	f	file:	signature:(char **buf, const char *delimiters)
 sleep	mongoose/main.c	47;"	d	file:
 sleep	src/lib/mongoose.c	108;"	d	file:
@@ -835,6 +1011,7 @@ substitute_index_file	src/lib/mongoose.c	/^static int substitute_index_file(stru
 suggest_connection_header	src/lib/mongoose.c	/^static const char *suggest_connection_header(const struct mg_connection *conn) {$/;"	f	file:	signature:(const struct mg_connection *conn)
 sys	add_files.py	/^import sys$/;"	i
 sys	mongoose/bindings/python/example.py	/^import sys$/;"	i
+tail	include/lib/list.h	/^    struct list_elem tail;$/;"	m	struct:list	typeref:struct:list::list_elem	access:public
 test_config	mongoose/test/embed.c	/^static const struct test_config {$/;"	s	file:
 test_config	mongoose/test/embed.c	/^} test_config[] = {$/;"	v	typeref:struct:test_config	file:
 test_config::event	mongoose/test/embed.c	/^  enum mg_event event;$/;"	m	struct:test_config	typeref:enum:test_config::mg_event	file:	access:public
@@ -852,12 +1029,17 @@ timespec::tv_nsec	src/lib/mongoose.c	/^  long tv_nsec;$/;"	m	struct:timespec	fil
 timespec::tv_sec	src/lib/mongoose.c	/^  long tv_sec;$/;"	m	struct:timespec	file:	access:public
 timestamp	mongoose/examples/chat.c	/^  time_t timestamp;            \/\/ Message timestamp, UTC$/;"	m	struct:message	file:	access:public
 to_unicode	src/lib/mongoose.c	/^static void to_unicode(const char *path, wchar_t *wbuf, size_t wbuf_len) {$/;"	f	file:	signature:(const char *path, wchar_t *wbuf, size_t wbuf_len)
+true	include/type.h	10;"	d
 tv_nsec	src/lib/mongoose.c	/^  long tv_nsec;$/;"	m	struct:timespec	file:	access:public
 tv_sec	src/lib/mongoose.c	/^  long tv_sec;$/;"	m	struct:timespec	file:	access:public
+u	include/protocol.h	/^    char* u;    \/\/ user$/;"	m	struct:__anon7	access:public
 u	src/lib/mongoose.c	/^  } u;$/;"	m	struct:usa	typeref:union:usa::__anon2	file:	access:public
+uint16	include/type.h	/^typedef unsigned    short uint16;$/;"	t
 uint16_t	src/lib/mongoose.c	/^typedef unsigned short  uint16_t;$/;"	t	file:
+uint32	include/type.h	/^typedef unsigned    int uint32;$/;"	t
 uint32_t	src/lib/mongoose.c	/^typedef unsigned int  uint32_t;$/;"	t	file:
 uint64_t	src/lib/mongoose.c	/^typedef unsigned __int64 uint64_t;$/;"	t	file:
+uint8	include/type.h	/^typedef unsigned    char uint8;$/;"	t
 uri	include/lib/mongoose.h	/^  char *uri;             \/\/ URL-decoded URI$/;"	m	struct:mg_request_info	access:public
 uri	mongoose/bindings/csharp/mongoose.cs	/^	public string	uri;$/;"	f	struct:MongooseRequestInfo	access:public
 uri	mongoose/test/embed.c	/^  const char *uri;$/;"	m	struct:test_config	file:	access:public
@@ -873,6 +1055,17 @@ user	mongoose/examples/chat.c	/^  char user[MAX_USER_LEN];     \/\/ User that ha
 user	mongoose/examples/chat.c	/^  char user[MAX_USER_LEN];  \/\/ Authenticated user$/;"	m	struct:session	file:	access:public
 user	src/lib/mongoose.c	/^  char *user, *uri, *cnonce, *response, *qop, *nc, *nonce;$/;"	m	struct:ah	file:	access:public
 user_callback	src/lib/mongoose.c	/^  mg_callback_t user_callback;  \/\/ User-defined callback function$/;"	m	struct:mg_context	file:	access:public
+user_compare	include/user.h	/^int user_compare (struct hash_elem* a, struct hash_elem* b, void*);$/;"	p	signature:(struct hash_elem* a, struct hash_elem* b, void*)
+user_compare	src/user.c	/^user_compare (struct hash_elem* a, struct hash_elem* b, void* AUX)$/;"	f	signature:(struct hash_elem* a, struct hash_elem* b, void* AUX)
+user_hash	include/user.h	/^uint32 user_hash (struct hash_elem* e);$/;"	p	signature:(struct hash_elem* e)
+user_hash	src/user.c	/^user_hash (struct hash_elem* e)$/;"	f	signature:(struct hash_elem* e)
+user_index	src/user.c	/^static struct hash user_index;$/;"	v	typeref:struct:hash	file:
+user_index_lock	src/user.c	/^static pthread_mutex_t user_index_lock = PTHREAD_MUTEX_INITIALIZER;$/;"	v	file:
+user_init	include/user.h	/^bool user_init (user_t*, const char* id);$/;"	p	signature:(user_t*, const char* id)
+user_init	src/user.c	/^user_init (user_t* u, const char* id)$/;"	f	signature:(user_t* u, const char* id)
+user_register	include/user.h	/^bool user_register (user_t*, const char* sess);$/;"	p	signature:(user_t*, const char* sess)
+user_register	src/user.c	/^user_register (user_t* u, const char* sess)$/;"	f	signature:(user_t* u, const char* sess)
+user_t	include/user.h	/^} user_t;$/;"	t	typeref:struct:__anon9
 value	include/lib/mongoose.h	/^    char *value;         \/\/ HTTP header value$/;"	m	struct:mg_request_info::mg_header	access:public
 value	mongoose/bindings/csharp/mongoose.cs	/^	public IntPtr	value;		\/\/ it won't be properly marshalled.$/;"	f	struct:MongooseHeader	access:public
 vars	src/lib/mongoose.c	/^  char *vars[MAX_CGI_ENVIR_VARS]; \/\/ char **envp$/;"	m	struct:cgi_env_block	file:	access:public

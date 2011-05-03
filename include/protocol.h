@@ -28,11 +28,11 @@
 #define MESSAGE_STR_SZ  10*1024*1024    // 10 MB max message size
 
 typedef enum reqtype {
-      PR_PUSH   // pushing an event to the server
-    , PR_UPDATE // requesting an update for events in the queue
-    , PR_REG    // register (login) a user with a session
-    , PR_UREG   // unregister (logout) a user with a session
-    , PR_DEFAULT// default (error) type
+      PR_REG = 0    // register (login) a user with a session
+    , PR_UREG = 1   // unregister (logout) a user with a session
+    , PR_PUSH = 2   // pushing an event to the server
+    , PR_UPDATE = 3 // requesting an update for events in the queue
+    , PR_DEFAULT = 4// default (error) type
 } reqtype_t;
 
 typedef struct {

@@ -26,6 +26,12 @@ static const char* options[] = {
 //static const char** options = NULL;
 
 /**
+ * Function that gets called to handle a user action,
+ * such as register, unregister, post, or update.
+ * */
+static user_event_func user_func_table[4];
+
+/**
  * Table of event handler functions to be invoked when the corresponding event
  * is passed to mg_callback_func.
  * */
@@ -44,6 +50,11 @@ main (int argc, char** argv)
     event_func_table[MG_HTTP_ERROR] = &mg_http_error_func;
     event_func_table[MG_EVENT_LOG] = &mg_event_log_func;
     event_func_table[MG_INIT_SSL] = &mg_init_ssl;
+
+    user_func_table[PR_REG] = &user_register_func;
+    user_func_table[PR_UREG] = &user_unregister_func;
+    user_func_table[PR_PUSH] = &user_push_func;
+    user_func_table[PR_UPDATE] = &user_update_func;
 
     context = mg_start (&mg_callback_func, options);
     if (context == NULL)
@@ -95,38 +106,8 @@ void* mg_new_request_func (struct mg_connection* conn,
      * Figure out what they want to do with this request
      * */
     protocol_info_t pinfo;
-    switch (protocol_eval (&pinfo, content, info))
-    {
-        case PR_PUSH:
-            printf ("push\n");
-            printf ("result: %d\n", init_events (pinfo.m, NULL));
-            break;
-        case PR_UPDATE:
-            printf ("update\n");
-            break;
-        case PR_REG:
-            printf ("register\n");
-
-            const char* uid = pinfo.u;
-            user_t* user = (user_t*) malloc (sizeof (user_t));
-            if (user == NULL)
-            {
-                // TODO: proper error handler
-                break;
-            }
-            user_init (user, uid);
-            break;
-        case PR_UREG:
-            printf ("unregister\n");
-            break;
-        default:
-            printf ("nothing\n");
-            break;
-    }
-    
-
-
-
+    reqtype_t t = protocol_eval (&pinfo, content, info)
+    user_func_table[t] (&pinfo, content, info);
 
     printf ("received new request\n");
     mg_printf (conn, "%shello\n", response_header);
@@ -147,10 +128,85 @@ void* mg_event_log_func (struct mg_connection* conn,
     return NULL;
 };
 
+/*
+ * TODO: implement this one day.
+ * Currently no plans to implement this.
+ * */
 void* mg_init_ssl (struct mg_connection* conn,
         const struct mg_request_info* info)
 {
-    
     return NULL;
 };
 
+bool 
+user_register_func (response_t* r, protocol_info_t* pinfo, 
+        const char* content, const struct mg_request_info* info)
+{
+    ASSERT (r);
+
+    user_t* user;
+    bool result = true;
+    uint8 code = 200;
+
+    /*
+     * If this user has already registered with a different session,
+     * then the user should already be created and in our index.  Look
+     * it up first.
+     * */
+    user = lookup_user (pinfo.u);
+
+    if (user == NULL)
+    {
+        const char* uid = pinfo.u;
+        user = (user_t*) malloc (sizeof (user_t));
+        if (user == NULL)
+        {
+            result = false;
+            code = 500;
+        }
+        else
+        {
+            /*
+             * This adds the user to our global users data structure.
+             * */
+            user_init (user, uid);
+        }
+    }
+    
+    if (result)
+    {
+        /*
+         * Now register this user with the requested session.
+         * */
+
+    }
+
+    r->code = code;
+    r->message = "";
+    r->success = result;
+
+    return result;
+};
+
+bool
+user_unregister_func (response_t* r, protocol_info_t* pinfo,
+        const char* content, const struct mg_request_info* info)
+{
+    ASSERT (r);
+};
+
+bool
+user_push_func (response_t* r, protocol_info_t* pinfo,
+        const char* content, const struct mg_request_info* info)
+{
+    ASSERT (r);
+    printf ("result: %d\n", init_events (pinfo->m, NULL));
+
+};
+
+bool 
+user_update_func (response_t* r, protocol_info_t* pinfo,
+        const char* content, const struct mg_request_info* info)
+{
+    ASSERT (r);
+};

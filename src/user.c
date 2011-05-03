@@ -17,12 +17,32 @@ bool
 init_user_index ()
 {
     hash_init (&user_index, &user_hash, &user_compare);
+
+    return true;
 };
 
 user_t* 
 lookup_user (const char* id)
 {
-    
+    /*
+     * Temporary read-only user object to compare with.
+     * */
+    user_t u;
+    strncpy (u.id, id, USER_STR_SZ);
+
+    /*
+     * Synchronized access to index
+     * */
+    pthread_mutex_lock (&user_index_lock);
+    struct hash_elem* e = 
+        hash_find (&user_index, &u.elem, NULL);
+    pthread_mutex_unlock (&user_index_lock);
+
+    if (e == NULL)
+    {
+        return NULL;
+    }
+    return HASH_ENTRY(e, user_t, elem);
 };
 
 bool 
@@ -30,18 +50,20 @@ user_init (user_t* u, const char* id)
 {
     ASSERT(u != NULL);
 
-//    u->elem = HASH_ELEM_INITIALIZER;
-    strcpy (&(u->id[0]), id);
+    strncpy (u->id, id, USER_STR_SZ);
 
     pthread_mutex_lock (&user_index_lock);
     hash_insert (&user_index, &u->elem);
     pthread_mutex_unlock (&user_index_lock);
+
+    return true;
 };
 
 bool 
 user_register (user_t* u, const char* sess)
 {
     
+    return false;
 };
 
 
