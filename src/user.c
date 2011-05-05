@@ -61,12 +61,19 @@ user_init (user_t* u, const char* id)
 };
 
 bool 
-user_register (user_t* u, const char* sess)
+user_register (user_t* u, session_t* s)
 {
     
     return false;
 };
 
+#define HASH_MASK_SIZE 16
+const uint8 hash_mask[] = {
+    0xae,   0xb1,   0xf8,   0x76,
+    0xff,   0x4c,   0x86,   0xef,
+    0x61,   0x4b,   0xab,   0xcd,
+    0x8c,   0x51,   0xc4,   0x3a
+};
 
 uint32 
 user_hash (struct hash_elem* e)
@@ -86,7 +93,7 @@ user_hash (struct hash_elem* e)
     {
         if (*uid == '\0')
             break;
-        hash ^= (*uid) << ((uint32) i % USER_STR_SZ);
+        hash ^= (*uid) << ((uint32) i % USER_STR_SZ) | hash_mask[i % HASH_MASK_SIZE];
         uid++;
     }
 
@@ -104,6 +111,6 @@ user_compare (struct hash_elem* a, struct hash_elem* b, void* AUX)
     ASSERT(_a);
     ASSERT(_b);
 
-    return strcmp (&(_a->id[0]), &(_b->id[1]));
+    return strcmp (_a->id, _b->id);
 };
 

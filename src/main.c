@@ -58,6 +58,9 @@ main (int argc, char** argv)
     user_func_table[PR_PUSH] = &user_push_func;
     user_func_table[PR_UPDATE] = &user_update_func;
 
+    init_user_index ();
+    init_session_index ();
+
     context = mg_start (&mg_callback_func, options);
     if (context == NULL)
     {
@@ -108,8 +111,9 @@ void* mg_new_request_func (struct mg_connection* conn,
      * Figure out what they want to do with this request
      * */
     protocol_info_t pinfo;
-    reqtype_t t = protocol_eval (&pinfo, content, info)
-    user_func_table[t] (&pinfo, content, info);
+    response_t response;
+    reqtype_t t = protocol_eval (&pinfo, content, info);
+    user_func_table[t] (&response, &pinfo, content, info);
 
     printf ("received new request\n");
     mg_printf (conn, "%shello\n", response_header);
@@ -150,22 +154,24 @@ user_register_func (response_t* r, protocol_info_t* pinfo,
     session_t* session;
     bool result = true;
     uint8 code = 200;
+    const char* message = "OK";
 
     /*
      * If this user has already registered with a different session,
      * then the user should already be created and in our index.  Look
      * it up first.
      * */
-    user = lookup_user (pinfo.u);
+    user = lookup_user (pinfo->u);
 
     if (user == NULL)
     {
-        const char* uid = pinfo.u;
+        const char* uid = pinfo->u;
         user = (user_t*) malloc (sizeof (user_t));
         if (user == NULL)
         {
             result = false;
             code = 500;
+            message = "Server ran out of memory!";
         }
         else
         {
@@ -185,10 +191,10 @@ user_register_func (response_t* r, protocol_info_t* pinfo,
     }
 
     r->code = code;
-    r->message = "";
+    r->message = message;
     r->success = result;
 
-    return result;
+    return true;
 };
 
 bool
