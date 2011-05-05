@@ -8,6 +8,8 @@
 #include "type.h"
 #include "debug.h"
 #include "protocol.h"
+#include "session.h"
+#include "user.h"
 
 /**
  * Context in which all mongoose functions operate.
@@ -145,6 +147,7 @@ user_register_func (response_t* r, protocol_info_t* pinfo,
     ASSERT (r);
 
     user_t* user;
+    session_t* session;
     bool result = true;
     uint8 code = 200;
 
@@ -178,7 +181,7 @@ user_register_func (response_t* r, protocol_info_t* pinfo,
         /*
          * Now register this user with the requested session.
          * */
-
+        user_register (user, session);
     }
 
     r->code = code;

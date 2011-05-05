@@ -4,6 +4,7 @@
 #include "type.h"
 #include "lib/hash.h"
 #include "protocol.h"
+#include "session.h"
 
 typedef struct 
 {
@@ -36,7 +37,7 @@ bool user_init (user_t*, const char* id);
 /**
  * Register a session with the given user.  Return False if unsuccessful.
  * */
-bool user_register (user_t*, const char* sess);
+bool user_register (user_t*, session_t*);
 
 #endif //USER_H
 

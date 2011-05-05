@@ -4,6 +4,7 @@
 
 #include "debug.h"
 #include "user.h"
+#include "session.h"
 #include "lib/hash.h"
 #include "protocol.h"
 

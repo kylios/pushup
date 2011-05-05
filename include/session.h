@@ -19,6 +19,6 @@ typedef struct {
                     // after sessions are destroyed.
    
 
-}
+} session_t
 
 #endif //SESSION_H
