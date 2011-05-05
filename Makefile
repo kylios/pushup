@@ -5,11 +5,12 @@ SOURCES= $(SRCFOLDER)lib/mongoose.o \
 		 $(SRCFOLDER)protocol.o \
 		 $(SRCFOLDER)debug.o \
 		 $(SRCFOLDER)event.o \
-		 $(SRCFOLDER)user.o 
+		 $(SRCFOLDER)user.o \
+		 $(SRCFOLDER)session.o
 
 MAINSRC= $(SOURCES) $(SRCFOLDER)main.o
 
-CFLAGS= -Iinclude -Wall -std=c99 
+CFLAGS= -Iinclude -Wall -std=c99 -g #-save-temps
 LDFLAGS= -pthread -ldl
 
 EXE= pushup

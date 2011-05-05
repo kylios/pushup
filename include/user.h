@@ -4,16 +4,18 @@
 #include "type.h"
 #include "lib/hash.h"
 #include "protocol.h"
-#include "session.h"
+
 
 typedef struct 
 {
-    struct hash_elem elem;
+    struct hash_elem elem;  // Hash elem for global user index.
 
     char id[USER_STR_SZ + 1];
 
     // Map session->event_queue
 } user_t;
+
+#include "session.h"
 
 
 uint32 user_hash (struct hash_elem* e);

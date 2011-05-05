@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "user.h"
 #include "lib/mongoose.h"
 #include "event.h"
 #include "main.h"
@@ -9,7 +10,6 @@
 #include "debug.h"
 #include "protocol.h"
 #include "session.h"
-#include "user.h"
 
 /**
  * Context in which all mongoose functions operate.
@@ -184,6 +184,24 @@ user_register_func (response_t* r, protocol_info_t* pinfo,
     
     if (result)
     {
+        session = lookup_session (pinfo->s);
+
+        if (session == NULL)
+        {
+            const char* sid = pinfo->s;
+            session = (session_t*) malloc (sizeof (session_t));
+            if (session == NULL)
+            {
+                result = false;
+                code = 500;
+                message = "Server ran out of memory!";
+            }
+            else
+            {
+                session_init (session, sid);
+            }
+        }
+
         /*
          * Now register this user with the requested session.
          * */
@@ -202,6 +220,26 @@ user_unregister_func (response_t* r, protocol_info_t* pinfo,
         const char* content, const struct mg_request_info* info)
 {
     ASSERT (r);
+
+    user_t* user = lookup_user (pinfo->u);
+    session_t* session = lookup_session (pinfo->s);
+
+    r->code = 200;
+    r->success = true;
+    r->message = "OK";
+
+    if (user == NULL)
+    {
+        return true;
+    }
+    if (session == NULL)
+    {
+        return true;
+    }
+
+    user_unregister (user, session);
+
+    return true;
 };
 
 bool

@@ -1,12 +1,13 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdio.h>
 #include <pthread.h>
 
 #include "debug.h"
 #include "user.h"
-#include "session.h"
 #include "lib/hash.h"
 #include "protocol.h"
+#include "session.h"
 
 static struct hash user_index;
 // TODO: can we build synchronization INTO the hash?  So that multiple
@@ -25,6 +26,7 @@ init_user_index ()
 user_t* 
 lookup_user (const char* id)
 {
+    printf ("Looking up user %s... ", id);
     /*
      * Temporary read-only user object to compare with.
      * */
@@ -41,8 +43,10 @@ lookup_user (const char* id)
 
     if (e == NULL)
     {
+        printf ("not found \n");
         return NULL;
     }
+    printf ("found\n");
     return HASH_ENTRY(e, user_t, elem);
 };
 
@@ -63,8 +67,32 @@ user_init (user_t* u, const char* id)
 bool 
 user_register (user_t* u, session_t* s)
 {
-    
-    return false;
+    ASSERT(u);
+    ASSERT(s);
+
+    /*
+     * Add user to session.
+     * */
+    if (session_add_user (s, u))
+    {
+        /*
+         * Construct a queue for events and add it to the user object.
+         * */
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+};
+
+bool
+user_unregister (user_t* u, session_t* s)
+{
+    ASSERT(u);
+    ASSERT(s);
+
+    session_remove_user (s, u);
 };
 
 #define HASH_MASK_SIZE 16

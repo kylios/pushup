@@ -1,7 +1,12 @@
 #ifndef SESSION_H
 #define SESSION_H
 
+#include <pthread.h>
+
+#include "type.h"
+#include "debug.h"
 #include "lib/hash.h"
+#include "user.h"
 
 /**
  * session.h defines functions and data structures for managing real-time push
@@ -18,9 +23,12 @@ void init_session_handler ();
 typedef struct {
     struct hash_elem elem;
     char name[33];    // Session names must be <= 32 characters long
-    unsigned id;      // Session ID.  These should get recycled 
-                        // after sessions are destroyed.
    
+    /*
+     * Store pointers to each user subscribed to this session
+     * */
+    pthread_mutex_t users_lock;
+    struct list users;
 
 } session_t;
 
@@ -41,5 +49,15 @@ session_t* lookup_session (const char* id);
  * Return FALSE if unsuccessful.
  * */
 bool session_init (session_t*, const char* id);
+
+/**
+ * Add the given user to the session's list of users.
+ * */
+bool session_add_user (session_t* s, user_t* u);
+ 
+/**
+ * Remove the given user from the session's list of users.
+ * */
+void session_remove_user (session_t* s, user_t* u);
 
 #endif //SESSION_H

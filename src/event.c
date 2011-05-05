@@ -4,9 +4,9 @@
 #include <type.h>
 #include <pthread.h>
 
+#include "user.h"
 #include "type.h"
 #include "event.h"
-#include "user.h"
 #include "lib/list.h"
 #include "debug.h"
 
