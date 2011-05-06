@@ -4,9 +4,12 @@
 #include <pthread.h>
 
 #include "user.h"
+#include "lib/list.h"
 
 typedef struct 
 {
+    struct list_elem allelem;
+
     pthread_mutex_t reg_count_lock;
     int reg_count;  // Number of registered subscribers.  When this becomes
                     // zero, it should be safe to free this object from memory
@@ -22,7 +25,7 @@ typedef struct
  * the global list.  Return a count of events initialized, or -1 if an error
  * occurred. 
  * */
-int init_events (const char* message, user_t*);
+int init_events (const char* message);
 
 
 

@@ -13,6 +13,7 @@ typedef struct
     char id[USER_STR_SZ + 1];
 
     // Map session->event_queue
+    struct hash session_queues;
 } user_t;
 
 #include "session.h"
