@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 
+#include "user.h"
 #include "type.h"
 #include "debug.h"
 #include "session.h"
@@ -25,8 +26,13 @@ typedef struct
     struct list events;         // Holds all the events 
     pthread_mutex_t events_lock;// Protects events
 
+    session_t* session;
+
 }   event_queue_t;
 
-void event_queue_init (event_queue_t* eq, session_t*);
+uint32 event_queue_hash_func (struct hash_elem*);
+int event_queue_compare_func (struct hash_elem*, struct hash_elem*, void*);
+
+void event_queue_init (event_queue_t* eq, session_t* s);
 
 #endif //EVENT_QUEUE_H

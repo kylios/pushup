@@ -6,7 +6,8 @@ SOURCES= $(SRCFOLDER)lib/mongoose.o \
 		 $(SRCFOLDER)debug.o \
 		 $(SRCFOLDER)event.o \
 		 $(SRCFOLDER)user.o \
-		 $(SRCFOLDER)session.o
+		 $(SRCFOLDER)session.o \
+		 $(SRCFOLDER)event_queue.o
 
 MAINSRC= $(SOURCES) $(SRCFOLDER)main.o
 

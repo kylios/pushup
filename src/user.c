@@ -8,6 +8,7 @@
 #include "lib/hash.h"
 #include "protocol.h"
 #include "session.h"
+#include "event_queue.h"
 
 static struct hash user_index;
 // TODO: can we build synchronization INTO the hash?  So that multiple
@@ -56,6 +57,9 @@ user_init (user_t* u, const char* id)
     ASSERT(u != NULL);
 
     strncpy (u->id, id, USER_STR_SZ);
+    pthread_mutex_init (&u->session_queues_lock, NULL);
+    hash_init (&u->session_queues, &event_queue_hash_func, 
+            &event_queue_compare_func);
 
     pthread_mutex_lock (&user_index_lock);
     hash_insert (&user_index, &u->elem);
@@ -70,6 +74,12 @@ user_register (user_t* u, session_t* s)
     ASSERT(u);
     ASSERT(s);
 
+    event_queue_t* eq = (event_queue_t*) malloc (sizeof (event_queue_t));
+    if (eq == NULL)
+    {
+        return false;
+    }
+
     /*
      * Add user to session.
      * */
@@ -78,10 +88,17 @@ user_register (user_t* u, session_t* s)
         /*
          * Construct a queue for events and add it to the user object.
          * */
+        event_queue_init (eq, s);
+
+        pthread_mutex_lock (&u->session_queues_lock);
+        hash_insert (&u->session_queues, &eq->elem);
+        pthread_mutex_unlock (&u->session_queues_lock);
+
         return true;
     }
     else
     {
+        free (eq);
         return false;
     }
 };
@@ -93,6 +110,26 @@ user_unregister (user_t* u, session_t* s)
     ASSERT(s);
 
     session_remove_user (s, u);
+
+    /*
+     * Find the event_queue associated with this session so we can remove it
+     * from the hash.
+     * */
+    event_queue_t temp;
+    // Since it only uses the session member of the struct to get the hash,
+    // that's all we have to initialize.
+    temp.session = s;
+
+    pthread_mutex_lock (&u->session_queues_lock);
+    struct hash_elem* e = hash_find (&u->session_queues, &temp.elem, NULL);
+    hash_remove (e);
+    pthread_mutex_unlock (&u->session_queues_lock);
+
+    event_queue_t* eq = HASH_ENTRY (e, event_queue_t, elem);
+    ASSERT (eq);
+    free (eq);
+
+    return true;
 };
 
 #define HASH_MASK_SIZE 16

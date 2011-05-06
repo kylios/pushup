@@ -25,7 +25,7 @@ typedef struct
  * the global list.  Return a count of events initialized, or -1 if an error
  * occurred. 
  * */
-int init_events (const char* message);
+int init_events (const char* message, user_t*);
 
 
 

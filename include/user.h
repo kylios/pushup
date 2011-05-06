@@ -1,10 +1,11 @@
 #ifndef USER_H
 #define USER_H
 
+#include <pthread.h>
+
 #include "type.h"
 #include "lib/hash.h"
 #include "protocol.h"
-
 
 typedef struct 
 {
@@ -13,6 +14,7 @@ typedef struct
     char id[USER_STR_SZ + 1];
 
     // Map session->event_queue
+    pthread_mutex_t session_queues_lock;
     struct hash session_queues;
 } user_t;
 
