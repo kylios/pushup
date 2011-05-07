@@ -35,4 +35,7 @@ int event_queue_compare_func (struct hash_elem*, struct hash_elem*, void*);
 
 void event_queue_init (event_queue_t* eq, session_t* s);
 
+void event_queue_push (event_queue_t* eq, event_t*);
+event_t* event_queue_shift (event_queue_t*);
+
 #endif //EVENT_QUEUE_H

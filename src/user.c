@@ -132,6 +132,32 @@ user_unregister (user_t* u, session_t* s)
     return true;
 };
 
+void 
+user_add_event (user_t* u, session_t* s, event_t* e)
+{
+    ASSERT (u);
+    ASSERT (s);
+    ASSERT (e);
+
+    event_queue_t temp;
+    temp.session = s;
+
+    struct hash_elem* e = hash_find (&u->session_queues, &temp.elem);
+    ASSERT (e);
+    event_queue_t* eq = HASH_ENTRY (e, event_queue_t, elem);
+
+    event_queue_push (eq, e);
+};
+
+event_t* 
+user_shift_event (user_t* u, session_t* s)
+{
+    ASSERT (u);
+    ASSERT (s);
+
+    
+};
+
 #define HASH_MASK_SIZE 16
 const uint8 hash_mask[] = {
     0xae,   0xb1,   0xf8,   0x76,

@@ -37,4 +37,32 @@ event_queue_compare_func (struct hash_elem* _a, struct hash_elem* _b,
     return 0;
 };
 
+void
+event_queue_push (event_queue_t* eq, event_t* e)
+{
+    ASSERT (eq);
+    ASSERT (e);
+
+    pthread_mutex_lock (&eq->events_lock);
+    list_push_back (&eq->events, &e->elem);
+    pthread_mutex_unlock (&eq->events_lock);
+};
+
+event_t*
+event_queue_shift (event_queue_t* eq)
+{
+    ASSERT (eq);
+
+    pthread_mutex_lock (&eq->events_lock);
+    struct list_elem* e = list_front (&eq->events);
+    ASSERT (e);
+    list_remove (e);
+    pthread_mutex_unlock (&eq->events_lock);
+
+    event_t* event = LIST_ENTRY (e, event_t, elem);
+    ASSERT (event);
+
+    return event;
+};
+
 

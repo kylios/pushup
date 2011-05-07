@@ -14,6 +14,7 @@
  * Keeps track of all the events
  * */
 static struct list events;
+static pthread_mutex_t events_lock;
 
 typedef struct
 {
@@ -77,9 +78,20 @@ parse_json_events (char* message, json_parse_state_t* state)
     return (const char*) s;
 };
 
-int 
-init_events (const char* message, user_t* user)
+void
+init_events ()
 {
+    list_init (&events);
+    pthread_mutex_init (&events_lock, NULL);
+};
+
+int 
+handle_events (const char* message, user_t* user, session_t* session)
+{
+    ASSERT (message);
+    ASSERT (user);
+    ASSERT (session);
+
     int num = 0;
     printf ("message: %s\n", message);
 
@@ -95,8 +107,14 @@ init_events (const char* message, user_t* user)
     {
         num++;
         event_t* e = (event_t*) malloc (sizeof (event_t));
-        event_init (e, user, str);
         str = parse_json_events (NULL, &state);
+        event_init (e, user, str);
+
+        pthread_mutex_lock (&events_lock);
+        list_push_back (&events, &e->allelem);
+        pthread_mutex_unlock (&events_lock);
+
+
     }
     printf ("DONE!\n");
 

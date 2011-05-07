@@ -9,6 +9,7 @@
 typedef struct 
 {
     struct list_elem allelem;
+    struct list_elem elem;  // For the event_queue
 
     pthread_mutex_t reg_count_lock;
     int reg_count;  // Number of registered subscribers.  When this becomes
@@ -20,12 +21,14 @@ typedef struct
 
 } event_t;
 
+void init_events ();
+
 /**
  * Initialize a list of events from a json encoded message and add them all to
  * the global list.  Return a count of events initialized, or -1 if an error
  * occurred. 
  * */
-int init_events (const char* message, user_t*);
+int handle_events (const char* message, user_t*, session_t*);
 
 
 

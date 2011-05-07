@@ -4,6 +4,7 @@
 #include <pthread.h>
 
 #include "type.h"
+#include "event.h"
 #include "lib/hash.h"
 #include "protocol.h"
 
@@ -43,6 +44,17 @@ bool user_init (user_t*, const char* id);
  * Register a session with the given user.  Return False if unsuccessful.
  * */
 bool user_register (user_t*, session_t*);
+
+/**
+ * Add an event for this user and session
+ * */
+void user_add_event (user_t*, session_t*, event_t*);
+
+/**
+ * Remove the next event off the user's event_queue.  Return NULL if there are
+ * none left.
+ * */
+event_t* user_shift_event (user_t*, session_t*);
 
 #endif //USER_H
 

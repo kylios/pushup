@@ -239,6 +239,10 @@ user_unregister_func (response_t* r, protocol_info_t* pinfo,
 
     user_unregister (user, session);
 
+    r->code = 200;
+    r->message = "OK";
+    r->result = true;
+
     return true;
 };
 
@@ -247,8 +251,41 @@ user_push_func (response_t* r, protocol_info_t* pinfo,
         const char* content, const struct mg_request_info* info)
 {
     ASSERT (r);
-    printf ("result: %d\n", init_events (pinfo->m, NULL));
+    ASSERT (pinfo);
+    ASSERT (content);
+    ASSERT (info);
 
+    user_t* user = lookup_user (pinfo->u);
+    session_t* session = lookup_session (pinfo->s);
+
+    if (!user)
+    {
+        r->code = 200;
+        r->message = "ERROR: user does not exist";
+        r->result = false;
+        return true;
+    }
+    if (!session)
+    {
+        r->code = 200;
+        r->message = "ERROR: session does not exist";
+        r->result = false;
+        return true;
+    }
+
+    if (-1 == handle_events (pinfo->m, user, session))
+    {
+        r->code = 200;
+        r->message = "Failed to import events";
+        r->result = false;
+        return true;
+    }
+
+    r->code = 200;
+    r->message = "OK";
+    r->result = true;
+
+    return true;
 };
 
 bool 
@@ -256,4 +293,34 @@ user_update_func (response_t* r, protocol_info_t* pinfo,
         const char* content, const struct mg_request_info* info)
 {
     ASSERT (r);
+    ASSERT (pinfo);
+    ASSERT (content);
+    ASSERT (info);
+
+    user_t* user = lookup_user (pinfo->u);
+    session_t* session = lookup_session (pinfo->s);
+
+    if (!user)
+    {
+        r->code = 200;
+        r->message = "ERROR: user does not exist";
+        r->result = false;
+        return true;
+    }
+    if (!session)
+    {
+        r->code = 200;
+        r->message = "ERROR: session does not exist";
+        r->result = false;
+        return true;
+    }
+
+    // The json text of the events that we'll return to the client
+    char* events_content;
+
+    r->code = 200;
+    r->message = events_content;
+    r->result = true;
+
+    return true;
 };
