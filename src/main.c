@@ -63,6 +63,7 @@ main (int argc, char** argv)
 
     init_user_index ();
     init_session_index ();
+    init_events ();
 
     context = mg_start (&mg_callback_func, options);
     if (context == NULL)
@@ -119,7 +120,7 @@ void* mg_new_request_func (struct mg_connection* conn,
     user_func_table[t] (&response, &pinfo, content, info);
 
     printf ("received new request\n");
-    mg_printf (conn, "%shello\n", response_header);
+    mg_printf (conn, "%s%s\n", response_header, response.message);
     return NULL;
 };
 
@@ -200,6 +201,8 @@ user_push_func (response_t* r, protocol_info_t* pinfo,
     user_t* user;
     session_t* session;
 
+    printf ("message: %s\n", pinfo->m);
+
     if (!push_user_session (pinfo->u, pinfo->s, pinfo->m, &user, &session))
     {
         if (!user)
@@ -248,40 +251,7 @@ user_update_func (response_t* r, protocol_info_t* pinfo,
     user_t* user = lookup_user (pinfo->u);
     session_t* session = lookup_session (pinfo->s);
 
-    if (!user)
-    {
-        r->code = 200;
-        r->message = "ERROR: user does not exist";
-        r->success = false;
-        return true;
-    }
-    if (!session)
-    {
-        r->code = 200;
-        r->message = "ERROR: session does not exist";
-        r->success = false;
-        return true;
-    }
-
-    event_queue_t temp;
-    temp.session = session;
-    struct hash_elem* el = hash_find (&user->session_queues, &temp.elem, NULL);
-    if (el == NULL)
-    {
-        // TODO: in this case, we should create a queue in the hash instead of
-        // return an error.
-        r->code = 200;
-        r->message = "ERROR: nothing posted to this queue.  TODO Fix";
-        r->success = false;
-        return true;
-    }
-    eq = HASH_ENTRY (el, event_queue_t, elem);
-    ASSERT (eq);
-
-    /*
-     * Allocate space for our result.
-     * */
-    events_content = (char*) malloc (MESSAGE_STR_SZ);
+    events_content = (char*) malloc (sizeof (char) * MESSAGE_STR_SZ);
     if (!events_content)
     {
         r->code = 500;
@@ -290,33 +260,27 @@ user_update_func (response_t* r, protocol_info_t* pinfo,
         return true;
     }
 
-    // TODO: wait until events come in for us
-    pthread_mutex_lock (&eq->events_lock);
-    int count;
-    if (sem_getvalue (&eq->events_count, &count) && count)
+    if (!update_user_session (pinfo->u, pinfo->s, events_content, &user, &session))
     {
-        /*
-         * Thread waits until another thread POSTs to the semaphore and
-         * increments its count.
-         * */
-        while (sem_wait (&eq->events_count))
+        if (!user)
         {
-            event = event_queue_shift (eq);
-
-            /*
-             * Concatenate this text to events_content
-             * */
-            strncat (events_content, event->message, event->message_size);
-
-            event_done (event);
-            
-            if (sem_getvalue (&eq->events_count, &count) || 0 >= count)
-            {
-                break;
-            }
+            r->code = 200;
+            r->message = "ERROR: user does not exist";
+            r->success = false;
+            return true;
         }
+        if (!session)
+        {
+            r->code = 200;
+            r->message = "ERROR: session does not exist";
+            r->success = false;
+            return true;
+        }
+        r->code = 500;
+        r->message = "Server ran out of memory";
+        r->success = false;
+        return true;
     }
-    pthread_mutex_unlock (&eq->events_lock);
 
     r->code = 200;
     r->message = events_content;

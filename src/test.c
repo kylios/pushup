@@ -7,7 +7,7 @@
 #include "type.h"
 #include "debug.h"
 #include "session.h"
-
+#include "protocol.h"
 
 int
 main (int argc, char** argv)
@@ -41,5 +41,20 @@ main (int argc, char** argv)
     push_user_session ("user2", "session1", "[ message6, message7 ]", NULL, NULL);
     push_user_session ("user2", "session2", "[ message8, message9, message10 ]", NULL, NULL);
 
+    user_debug ();
+
+    printf ("\n\nNow begin fetching events\n");
+    char* content = (char*) malloc (sizeof (char) * MESSAGE_STR_SZ);
+
+    update_user_session ("user1", "session1", content, NULL, NULL);
+    printf ("Message: %s\n", content);
+    user_debug ();
+
+    update_user_session ("user2", "session1", content, NULL, NULL);
+    printf ("Message: %s\n", content);
+    user_debug ();
+
+    update_user_session ("user1", "session1", content, NULL, NULL);
+    printf ("Message: %s\n", content);
     user_debug ();
 };

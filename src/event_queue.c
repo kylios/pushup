@@ -57,6 +57,10 @@ event_queue_push (event_queue_t* eq, event_t* e)
         return false;
     }
 
+    pthread_mutex_lock (&e->reg_count_lock);
+    e->reg_count++;
+    pthread_mutex_unlock (&e->reg_count_lock);
+
     ev->e = e;
     pthread_mutex_lock (&eq->events_lock);
     list_push_back (&eq->events, &ev->elem);

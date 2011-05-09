@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 #include <type.h>
@@ -72,7 +73,7 @@ parse_json_events (char* message, json_parse_state_t* state)
             message++;
             return NULL;
         }
-        else
+        else if (0 == isspace (c));
         {
             *(message) = c;
         }
@@ -111,6 +112,9 @@ handle_events (const char* message, user_t* user, session_t* session)
 
     json_parse_state_t state = { 0, NULL };
 
+    // TODO: outside loop should be users, inside loop should be events.  
+    //  We'll save some time becaues we won't have to look up the event_queue
+    //  every single time.
     const char* str = parse_json_events (m, &state);
     while (NULL != str && num >= 0)
     {
