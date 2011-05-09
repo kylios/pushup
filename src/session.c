@@ -9,13 +9,6 @@
 #include "lib/hash.h"
 #include "session.h"
 
-typedef struct
-{
-    struct list_elem elem;  // Keeps track of this element in the session's 
-                            // user-list
-    user_t* user;           // The user object 
-}   session_user_record_t;
-
 
 static struct hash session_index;
 // TODO: can we build synchronization INTO the hash?  So that multiple
@@ -71,6 +64,28 @@ init_session_index ()
     return true;
 };
 
+session_t*
+get_or_init_session (const char* id)
+{
+    ASSERT (id);
+
+    session_t* session = lookup_session (id);
+
+    if (session == NULL)
+    {
+        session = (session_t*) malloc (sizeof (session_t));
+        if (session == NULL)
+        {
+            return NULL;
+        }
+        else
+        {
+            session_init (session, id);
+        }
+    }
+
+    return session;
+};
 
 /**
  * Lookup and return a session in the database with the given id.  Returns NULL if

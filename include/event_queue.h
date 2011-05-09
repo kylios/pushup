@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <semaphore.h>
 
 #include "user.h"
 #include "type.h"
@@ -25,6 +26,7 @@ typedef struct
 
     struct list events;         // Holds all the events 
     pthread_mutex_t events_lock;// Protects events
+    sem_t events_count;         // Counts the events in the queue
 
     session_t* session;
 
@@ -35,7 +37,9 @@ int event_queue_compare_func (struct hash_elem*, struct hash_elem*, void*);
 
 void event_queue_init (event_queue_t* eq, session_t* s);
 
-void event_queue_push (event_queue_t* eq, event_t*);
+bool event_queue_push (event_queue_t* eq, event_t*);
 event_t* event_queue_shift (event_queue_t*);
+
+void event_queue_debug (event_queue_t* eq);
 
 #endif //EVENT_QUEUE_H

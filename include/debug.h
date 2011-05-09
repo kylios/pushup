@@ -13,7 +13,7 @@ void hexdump (void* start, uint32 sz);
         printf ("!!!Failed assertion: `%s' in %s: %d in %s \n\n", \
             #expression, __FILE__, __LINE__, __func__);    \
         debug_backtrace (); \
-        exit(1); \
+        while(1); \
     } 
 
 #define DEBUG_MARK  \

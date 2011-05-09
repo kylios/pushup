@@ -18,6 +18,7 @@
 #define PROTO_USER      "u"
 #define PROTO_SESSION   "s"
 #define PROTO_MESSAGE   "m"
+#define PROTO_DEBUG     "x"
 
 /*
  * Define the maximum sizes of each of these request parameters.
@@ -26,13 +27,15 @@
 #define USER_STR_SZ     32              // designed for md5 hash
 #define SESSION_STR_SZ  32              // designed for md5 hash
 #define MESSAGE_STR_SZ  10*1024*1024    // 10 MB max message size
+#define DEBUG_STR_SZ    1024            
 
 typedef enum reqtype {
       PR_REG = 0    // register (login) a user with a session
     , PR_UREG = 1   // unregister (logout) a user with a session
     , PR_PUSH = 2   // pushing an event to the server
     , PR_UPDATE = 3 // requesting an update for events in the queue
-    , PR_DEFAULT = 4// default (error) type
+    , PR_DEBUG = 4  // For testing only
+    , PR_DEFAULT = 5// default (error) type
 } reqtype_t;
 
 typedef struct {
@@ -41,6 +44,7 @@ typedef struct {
     char* u;    // user
     char* s;    // session
     char* m;    // message
+    char* x;    // debug
 } protocol_info_t;
 
 #define require(PARAM){ \

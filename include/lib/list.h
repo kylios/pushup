@@ -67,6 +67,10 @@ bool list_empty (struct list*);
 void list_insert_ordered (struct list*, struct list_elem*, 
         list_compare_func*, void*);
 
+typedef void list_action_func (struct list_elem*, void* AUX);
+
+void list_apply (struct list*, list_action_func*);
+
 void list_print (struct list*, list_print_func* func);
 
 #endif // LIST_H

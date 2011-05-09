@@ -88,4 +88,32 @@ void hash_print (struct hash* hash, hash_print_func* func);
 uint32 hash_string (struct hash_elem* str);
 uint32 hash_addr (struct hash_elem* addr);
 
+/**
+ * Basic forward iterator for the hash.  Example:
+ *
+ *  struct hash_iter it;
+ *  struct hash_iter* i;
+ *  for (i = hash_start (hash, &it); i != hash_end (i); 
+ *           i = hash_next (i))
+ *  {
+ *      ... do something with i->elem
+ *  }
+ *
+ * */
+
+struct hash_iter
+{
+    struct hash_elem* elem;
+    int level;
+};
+
+struct hash_iter* hash_start (struct hash*, struct hash_iter*);
+struct hash_iter* hash_next (struct hash*, struct hash_iter*);
+struct hash_iter* hash_end ();
+
+typedef void hash_action_func (struct hash_elem*, void* aux);
+
+void hash_apply (struct hash*, hash_action_func* func);
+
+
 #endif  // LIB_KERNEL_HASH_H

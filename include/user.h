@@ -4,7 +4,6 @@
 #include <pthread.h>
 
 #include "type.h"
-#include "event.h"
 #include "lib/hash.h"
 #include "protocol.h"
 
@@ -20,13 +19,15 @@ typedef struct
 } user_t;
 
 #include "session.h"
-
+#include "event.h"
 
 uint32 user_hash (struct hash_elem* e);
 int user_compare (struct hash_elem* a, struct hash_elem* b, void*);
 
 bool init_user_index ();
 
+
+user_t* get_or_init_user (const char* id);
 
 /**
  * Lookup and return a user in the database with the given id.  Returns NULL if
@@ -46,6 +47,11 @@ bool user_init (user_t*, const char* id);
 bool user_register (user_t*, session_t*);
 
 /**
+ * Unregister a session with the given user.  Return False if unsuccessful.
+ * */
+bool user_unregister (user_t*, session_t*);
+
+/**
  * Add an event for this user and session
  * */
 void user_add_event (user_t*, session_t*, event_t*);
@@ -55,6 +61,8 @@ void user_add_event (user_t*, session_t*, event_t*);
  * none left.
  * */
 event_t* user_shift_event (user_t*, session_t*);
+
+void user_debug ();
 
 #endif //USER_H
 

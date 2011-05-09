@@ -7,7 +7,7 @@
 typedef struct
 {
     bool success;
-    uint8 code;
+    uint16 code;
     const char* message;
 } response_t;
 
@@ -51,4 +51,6 @@ bool user_unregister_func (response_t*, protocol_info_t*,
 bool user_push_func (response_t*, protocol_info_t*, 
         const char*, const struct mg_request_info*);
 bool user_update_func (response_t*, protocol_info_t*, 
+        const char*, const struct mg_request_info*);
+bool user_debug_func (response_t*, protocol_info_t*, 
         const char*, const struct mg_request_info*);

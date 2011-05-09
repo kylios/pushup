@@ -32,11 +32,19 @@ typedef struct {
 
 } session_t;
 
+typedef struct
+{
+    struct list_elem elem;  // Keeps track of this element in the session's 
+                            // user-list
+    user_t* user;           // The user object 
+}   session_user_record_t;
+
 uint32 session_hash (struct hash_elem* e);
 int session_compare (struct hash_elem* a, struct hash_elem* b, void*);
 
 bool init_session_index ();
 
+session_t* get_or_init_session (const char* id);
 
 /**
  * Lookup and return a session in the database with the given id.  Returns NULL if

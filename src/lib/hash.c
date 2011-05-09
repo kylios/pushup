@@ -145,6 +145,87 @@ hash_print (struct hash* hash, hash_print_func* func)
     }
 };
 
+
+struct hash_iter* 
+hash_start (struct hash* h, struct hash_iter* it)
+{
+    ASSERT (h);
+    ASSERT (it);
+
+    it->level = 0;
+    it->elem = NULL;
+    it = hash_next (h, it);
+
+    return it;
+};
+
+struct hash_iter* 
+hash_next (struct hash* h, struct hash_iter* it)
+{
+    ASSERT (h);
+    ASSERT (it);
+
+    struct list* l;
+    ASSERT (l);
+    struct list_elem* e = HASH_ELEM_TO_LIST_ELEM (it->elem);
+    printf ("E: %p\n", e);
+
+    l = &h->buckets[it->level];
+    if (e && e != list_end (l))
+    {
+        printf ("calling list_next\n");
+        e = list_next (e);
+    }
+    else
+    {
+        //it->level++;
+        e = list_begin (l);
+        printf ("entering while loop\n");
+        while (list_empty (l))
+        {
+            it->level++;
+//            printf ("level: %d\n", it->level);
+
+            if (it->level == HASH_BUCKETS)
+            {
+                // End of hash
+                return NULL;
+            }
+            l = &h->buckets[it->level];
+        }
+        printf ("list: %p\n", l);
+        e = list_begin (l);
+    }
+    it->elem = LIST_ELEM_TO_HASH_ELEM (e);
+
+    return it;
+};
+
+struct hash_iter* 
+hash_end ()
+{
+    return NULL;    
+};
+
+void 
+hash_apply (struct hash* h, hash_action_func* func)
+{
+    ASSERT (h);
+    ASSERT (func);
+
+    int i;
+    for (i = 0; i < HASH_BUCKETS; i++)
+    {
+        struct list* l = &h->buckets[i];
+
+        struct list_elem* e;
+        for (e = list_begin (l); e != list_end (l); e = list_next (e))
+        {
+            func (LIST_ELEM_TO_HASH_ELEM (e), NULL);
+        }
+    }
+};
+
 /* Some common hash functions */
 uint32 
 hash_string (struct hash_elem* str)

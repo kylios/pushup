@@ -25,6 +25,35 @@ init_user_index ()
 };
 
 user_t* 
+get_or_init_user (const char* id)
+{
+     /*
+     * If this user has already registered with a different session,
+     * then the user should already be created and in our index.  Look
+     * it up first.
+     * */
+    user_t* user = lookup_user (id);
+
+    if (user == NULL)
+    {
+        user = (user_t*) malloc (sizeof (user_t));
+        if (user == NULL)
+        {
+            return NULL;
+        }
+        else
+        {
+            /*
+             * This adds the user to our global users data structure.
+             * */
+            user_init (user, id);
+        }
+    }
+    
+    return user;
+};
+
+user_t* 
 lookup_user (const char* id)
 {
     printf ("Looking up user %s... ", id);
@@ -64,6 +93,8 @@ user_init (user_t* u, const char* id)
     pthread_mutex_lock (&user_index_lock);
     hash_insert (&user_index, &u->elem);
     pthread_mutex_unlock (&user_index_lock);
+
+    printf ("user elem: %p\n", &u->elem);
 
     return true;
 };
@@ -142,9 +173,9 @@ user_add_event (user_t* u, session_t* s, event_t* e)
     event_queue_t temp;
     temp.session = s;
 
-    struct hash_elem* e = hash_find (&u->session_queues, &temp.elem);
-    ASSERT (e);
-    event_queue_t* eq = HASH_ENTRY (e, event_queue_t, elem);
+    struct hash_elem* elem = hash_find (&u->session_queues, &temp.elem, NULL);
+    ASSERT (elem);
+    event_queue_t* eq = HASH_ENTRY (elem, event_queue_t, elem);
 
     event_queue_push (eq, e);
 };
@@ -155,7 +186,7 @@ user_shift_event (user_t* u, session_t* s)
     ASSERT (u);
     ASSERT (s);
 
-    
+    return NULL;    
 };
 
 #define HASH_MASK_SIZE 16
@@ -205,3 +236,60 @@ user_compare (struct hash_elem* a, struct hash_elem* b, void* AUX)
     return strcmp (_a->id, _b->id);
 };
 
+static void
+session_queues_debug_helper (struct hash_elem* e, void* AUX)
+{
+    ASSERT (e);
+
+    event_queue_t* eq = HASH_ENTRY (e, event_queue_t, elem);
+    ASSERT (eq);
+    event_queue_debug (eq);
+};
+
+static void
+user_debug_helper (struct hash_elem* e, void* AUX)
+{
+    ASSERT (e);
+
+    user_t* u = HASH_ENTRY (e, user_t, elem);
+    printf ("User: %s\n", u->id);
+
+    pthread_mutex_lock (&u->session_queues_lock);
+    hash_apply (&u->session_queues, &session_queues_debug_helper);
+    pthread_mutex_unlock (&u->session_queues_lock);
+};
+
+void
+user_debug ()
+{
+
+    printf ("==============================================\n");
+    pthread_mutex_lock (&user_index_lock);
+    hash_apply (&user_index, &user_debug_helper);
+    pthread_mutex_unlock (&user_index_lock);
+
+//it = hash_start (&user_index, it);
+//printf ("start: %p\n", it);
+//    pthread_mutex_lock (&user_index_lock);
+//    for (; it != hash_end (); 
+//            it = hash_next (&user_index, it))
+//    {
+//        user_t* u = HASH_ENTRY (it->elem, user_t, elem);
+//
+//        printf ("=====================================================\n");
+//        printf ("User ID: %s\n", u->id);
+//
+//        struct hash* session_queues = &u->session_queues;
+//        struct hash_iter it2;
+//        struct hash_iter* i2;
+//        pthread_mutex_lock (&u->session_queues_lock);
+//        for (i2 = hash_start (session_queues, &it2); i2 != hash_end ();
+//                i2 = hash_next (session_queues, i2))
+//        {
+//            event_queue_t* eq = HASH_ENTRY (i2->elem, event_queue_t, elem);
+//            printf ("-Session: %s\n", eq->session->name);
+//        }
+//        pthread_mutex_unlock (&u->session_queues_lock);
+//    }
+//    pthread_mutex_unlock (&user_index_lock);
+};

@@ -70,14 +70,19 @@ protocol_eval (protocol_info_t* pinfo, const char* request_body,
     size_t message_buf_sz = 1 + MESSAGE_STR_SZ;
     char* message_buf = 
         (char*) malloc (sizeof (char) * message_buf_sz);
+    size_t debug_buf_sz = 1 + DEBUG_STR_SZ;
+    char* debug_buf =
+        (char*) malloc (sizeof (char) * debug_buf_sz);
 
     if (NULL == action_buf || NULL == user_buf || 
-        NULL == session_buf || NULL == message_buf)
+        NULL == session_buf || NULL == message_buf ||
+        NULL == debug_buf)
     {
         free (action_buf);
         free (user_buf);
         free (session_buf);
         free (message_buf);
+        free (debug_buf);
 
         return PR_DEFAULT;
     }
@@ -93,19 +98,22 @@ protocol_eval (protocol_info_t* pinfo, const char* request_body,
             session_buf, sizeof (char) * session_buf_sz);
     result |= get_var (rinfo, request_body, PROTO_MESSAGE, 
             message_buf, sizeof (char) * message_buf_sz);
+    result != get_var (rinfo, request_body, PROTO_DEBUG,
+            debug_buf, sizeof (char) * debug_buf_sz);
 
     /*
      * Error occurred if any of the above return -1.
      * */
-    if (result < 0)
-    {
-        free (action_buf);
-        free (user_buf);
-        free (session_buf);
-        free (message_buf);
-
-        return PR_DEFAULT;
-    }
+//    if (result < 0)
+//    {
+//        free (action_buf);
+//        free (user_buf);
+//        free (session_buf);
+//        free (message_buf);
+//        free (debug_buf);
+//
+//        return PR_DEFAULT;
+//    }
 
     /*
      * Do some checks to make sure the right arguments are supplied.
@@ -114,6 +122,7 @@ protocol_eval (protocol_info_t* pinfo, const char* request_body,
     pinfo->u = user_buf;
     pinfo->s = session_buf;
     pinfo->m = message_buf;
+    pinfo->x = debug_buf;
 
     /*
      * Determine the request type using the action (a) field, and populate the
@@ -143,6 +152,9 @@ protocol_eval (protocol_info_t* pinfo, const char* request_body,
             pinfo->reqtype = PR_UREG;
             require (pinfo->u);
             require (pinfo->s);
+            break;
+        case 'x':
+            pinfo->reqtype = PR_DEBUG;
             break;
         default:
             pinfo->reqtype = PR_DEFAULT;

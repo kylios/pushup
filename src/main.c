@@ -10,6 +10,8 @@
 #include "debug.h"
 #include "protocol.h"
 #include "session.h"
+#include "event_queue.h"
+#include "functions.h"
 
 /**
  * Context in which all mongoose functions operate.
@@ -31,7 +33,7 @@ static const char* options[] = {
  * Function that gets called to handle a user action,
  * such as register, unregister, post, or update.
  * */
-static user_event_func user_func_table[4];
+static user_event_func user_func_table[5];
 
 /**
  * Table of event handler functions to be invoked when the corresponding event
@@ -57,6 +59,7 @@ main (int argc, char** argv)
     user_func_table[PR_UREG] = &user_unregister_func;
     user_func_table[PR_PUSH] = &user_push_func;
     user_func_table[PR_UPDATE] = &user_update_func;
+    user_func_table[PR_DEBUG] = &user_debug_func;
 
     init_user_index ();
     init_session_index ();
@@ -153,59 +156,14 @@ user_register_func (response_t* r, protocol_info_t* pinfo,
     user_t* user;
     session_t* session;
     bool result = true;
-    uint8 code = 200;
+    uint16 code = 200;
     const char* message = "OK";
 
-    /*
-     * If this user has already registered with a different session,
-     * then the user should already be created and in our index.  Look
-     * it up first.
-     * */
-    user = lookup_user (pinfo->u);
-
-    if (user == NULL)
+    if (!register_user_session (pinfo->u, pinfo->s, &user, &session))
     {
-        const char* uid = pinfo->u;
-        user = (user_t*) malloc (sizeof (user_t));
-        if (user == NULL)
-        {
-            result = false;
-            code = 500;
-            message = "Server ran out of memory!";
-        }
-        else
-        {
-            /*
-             * This adds the user to our global users data structure.
-             * */
-            user_init (user, uid);
-        }
-    }
-    
-    if (result)
-    {
-        session = lookup_session (pinfo->s);
-
-        if (session == NULL)
-        {
-            const char* sid = pinfo->s;
-            session = (session_t*) malloc (sizeof (session_t));
-            if (session == NULL)
-            {
-                result = false;
-                code = 500;
-                message = "Server ran out of memory!";
-            }
-            else
-            {
-                session_init (session, sid);
-            }
-        }
-
-        /*
-         * Now register this user with the requested session.
-         * */
-        user_register (user, session);
+        code = 500;
+        message = "Server ran out of memory";
+        result = false;
     }
 
     r->code = code;
@@ -221,27 +179,11 @@ user_unregister_func (response_t* r, protocol_info_t* pinfo,
 {
     ASSERT (r);
 
-    user_t* user = lookup_user (pinfo->u);
-    session_t* session = lookup_session (pinfo->s);
-
     r->code = 200;
     r->success = true;
     r->message = "OK";
 
-    if (user == NULL)
-    {
-        return true;
-    }
-    if (session == NULL)
-    {
-        return true;
-    }
-
-    user_unregister (user, session);
-
-    r->code = 200;
-    r->message = "OK";
-    r->result = true;
+    unregister_user_session (pinfo->u, pinfo->s);
 
     return true;
 };
@@ -255,35 +197,37 @@ user_push_func (response_t* r, protocol_info_t* pinfo,
     ASSERT (content);
     ASSERT (info);
 
-    user_t* user = lookup_user (pinfo->u);
-    session_t* session = lookup_session (pinfo->s);
+    user_t* user;
+    session_t* session;
 
-    if (!user)
+    if (!push_user_session (pinfo->u, pinfo->s, pinfo->m, &user, &session))
     {
-        r->code = 200;
-        r->message = "ERROR: user does not exist";
-        r->result = false;
-        return true;
-    }
-    if (!session)
-    {
-        r->code = 200;
-        r->message = "ERROR: session does not exist";
-        r->result = false;
-        return true;
-    }
-
-    if (-1 == handle_events (pinfo->m, user, session))
-    {
-        r->code = 200;
-        r->message = "Failed to import events";
-        r->result = false;
-        return true;
+        if (!user)
+        {
+            r->code = 200;
+            r->message = "ERROR: user does not exist";
+            r->success = false;
+            return true;
+        }
+        else if (!session)
+        {
+            r->code = 200;
+            r->message = "ERROR: session does not exist";
+            r->success = false;
+            return true;
+        }
+        else
+        {
+            r->code = 200;
+            r->message = "Failed to import events";
+            r->success = false;
+            return true;
+        }
     }
 
     r->code = 200;
     r->message = "OK";
-    r->result = true;
+    r->success = true;
 
     return true;
 };
@@ -297,6 +241,10 @@ user_update_func (response_t* r, protocol_info_t* pinfo,
     ASSERT (content);
     ASSERT (info);
 
+    // The json text of the events that we'll return to the client
+    char* events_content;
+    event_t* event;
+    event_queue_t* eq;
     user_t* user = lookup_user (pinfo->u);
     session_t* session = lookup_session (pinfo->s);
 
@@ -304,23 +252,90 @@ user_update_func (response_t* r, protocol_info_t* pinfo,
     {
         r->code = 200;
         r->message = "ERROR: user does not exist";
-        r->result = false;
+        r->success = false;
         return true;
     }
     if (!session)
     {
         r->code = 200;
         r->message = "ERROR: session does not exist";
-        r->result = false;
+        r->success = false;
         return true;
     }
 
-    // The json text of the events that we'll return to the client
-    char* events_content;
+    event_queue_t temp;
+    temp.session = session;
+    struct hash_elem* el = hash_find (&user->session_queues, &temp.elem, NULL);
+    if (el == NULL)
+    {
+        // TODO: in this case, we should create a queue in the hash instead of
+        // return an error.
+        r->code = 200;
+        r->message = "ERROR: nothing posted to this queue.  TODO Fix";
+        r->success = false;
+        return true;
+    }
+    eq = HASH_ENTRY (el, event_queue_t, elem);
+    ASSERT (eq);
+
+    /*
+     * Allocate space for our result.
+     * */
+    events_content = (char*) malloc (MESSAGE_STR_SZ);
+    if (!events_content)
+    {
+        r->code = 500;
+        r->message = "Server ran out of memory";
+        r->success = false;
+        return true;
+    }
+
+    // TODO: wait until events come in for us
+    pthread_mutex_lock (&eq->events_lock);
+    int count;
+    if (sem_getvalue (&eq->events_count, &count) && count)
+    {
+        /*
+         * Thread waits until another thread POSTs to the semaphore and
+         * increments its count.
+         * */
+        while (sem_wait (&eq->events_count))
+        {
+            event = event_queue_shift (eq);
+
+            /*
+             * Concatenate this text to events_content
+             * */
+            strncat (events_content, event->message, event->message_size);
+
+            event_done (event);
+            
+            if (sem_getvalue (&eq->events_count, &count) || 0 >= count)
+            {
+                break;
+            }
+        }
+    }
+    pthread_mutex_unlock (&eq->events_lock);
 
     r->code = 200;
     r->message = events_content;
-    r->result = true;
+    r->success = true;
 
     return true;
 };
+
+bool
+user_debug_func (response_t* r, protocol_info_t* pinfo,
+        const char* content, const struct mg_request_info* info)
+{
+    printf ("debug\n");
+    /*
+     * Just output all the users, sessions, and events.
+     * */
+    struct hash_iter iter;
+    user_debug ();
+
+    return true;
+};
+

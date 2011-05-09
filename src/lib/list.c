@@ -215,6 +215,19 @@ list_insert_ordered (struct list* list, struct list_elem* elem,
     list_push_back (list, elem);
 };
 
+void
+list_apply (struct list* l, list_action_func* func)
+{
+    ASSERT (l);
+    ASSERT (func);
+
+    struct list_elem* e;
+    for (e = list_begin (l); e != list_end (l); e = list_next (e))
+    {
+        func (e, NULL);
+    }
+};
+
 void 
 list_print (struct list* list, list_print_func* func)
 {
