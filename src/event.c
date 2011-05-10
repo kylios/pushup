@@ -11,6 +11,7 @@
 #include "lib/list.h"
 #include "debug.h"
 #include "protocol.h"
+#include "event_queue.h"
 
 /*
  * Keeps track of all the events
@@ -139,12 +140,44 @@ handle_events (const char* message, user_t* user, session_t* session)
             ASSERT (record);
             user_t* u = record->user;           
             ASSERT (u);
-            user_add_event (u, session, e);
+
+            /*
+             * Get user's event_queue
+             * */
+            event_queue_t temp;
+            temp.session = session;
+            struct hash_elem* elem = hash_find (&u->session_queues, &temp.elem, NULL);
+            ASSERT (elem);
+            event_queue_t* eq = HASH_ENTRY (elem, event_queue_t, elem);
+            event_queue_push (eq, e);
         }
         pthread_mutex_unlock (&session->users_lock);
         
         str = parse_json_events (NULL, &state);
     }
+
+    pthread_mutex_lock (&session->users_lock);
+    struct list_elem* elem;
+    for (elem = list_front (&session->users); elem != list_back (&session->users); 
+            elem = list_next (elem))
+    {
+        session_user_record_t* record = 
+            LIST_ENTRY (elem, session_user_record_t, elem);
+        ASSERT (record);
+        user_t* u = record->user;           
+        ASSERT (u);
+
+        /*
+         * Get user's event_queue
+         * */
+        event_queue_t temp;
+        temp.session = session;
+        struct hash_elem* elem = hash_find (&u->session_queues, &temp.elem, NULL);
+        ASSERT (elem);
+        event_queue_t* eq = HASH_ENTRY (elem, event_queue_t, elem);
+        event_queue_signal (eq);
+    }
+    pthread_mutex_unlock (&session->users_lock);
 
     return num;
 };

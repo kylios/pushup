@@ -131,32 +131,28 @@ update_user_session (const char* uid, const char* sid, char* message,
     // TODO: wait until events come in for us
     int count;
     int num = 0;
-    //if (0 == sem_getvalue (&eq->events_count, &count) && count)
-    //{
+    int num_left;
+
+    do
+    {
+        event = event_queue_shift (eq, &num_left);
+
         /*
-         * Thread waits until another thread POSTs to the semaphore and
-         * increments its count.
+         * Concatenate this text to events_content
          * */
-        while (0 == sem_wait (&eq->events_count))
+        if (num > 0)  strncat (message, ",", 1);
+        strncat (message, event->message, event->message_size);
+
+        event_done (event);
+        
+        if (sem_getvalue (&eq->events_count, &count) || 0 >= count)
         {
-            event = event_queue_shift (eq);
-
-            /*
-             * Concatenate this text to events_content
-             * */
-            if (num > 0)  strncat (message, ",", 1);
-            strncat (message, event->message, event->message_size);
-
-            event_done (event);
-            
-            if (sem_getvalue (&eq->events_count, &count) || 0 >= count)
-            {
-                break;
-            }
-
-            num++;
+            break;
         }
-    //}
+
+        num++;
+    }
+    while (num_left);
 
     strncat (message, "]", 1);
 

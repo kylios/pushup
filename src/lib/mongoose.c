@@ -449,6 +449,8 @@ struct mg_connection {
   int buf_size;               // Buffer size
   int request_len;            // Size of the request + headers in a buffer
   int data_len;               // Total size of data in a buffer
+  int suspended;              // This thread is suspended
+  mg_suspended_callback_t cb; // Call this when thread is no longer suspended
 };
 
 const char **mg_get_valid_option_names(void) {

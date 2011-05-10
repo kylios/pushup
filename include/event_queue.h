@@ -26,7 +26,8 @@ typedef struct
 
     struct list events;         // Holds all the events 
     pthread_mutex_t events_lock;// Protects events
-    sem_t events_count;         // Counts the events in the queue
+    pthread_cond_t events_cond; // Signal an updating thread to wake up
+    int events_count;           // Counts the events in the queue
 
     session_t* session;
 
@@ -38,7 +39,8 @@ int event_queue_compare_func (struct hash_elem*, struct hash_elem*, void*);
 void event_queue_init (event_queue_t* eq, session_t* s);
 
 bool event_queue_push (event_queue_t* eq, event_t*);
-event_t* event_queue_shift (event_queue_t*);
+void event_queue_signal (event_queue_t* eq);
+event_t* event_queue_shift (event_queue_t*, int* num_left);
 
 void event_queue_debug (event_queue_t* eq);
 

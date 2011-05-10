@@ -15,6 +15,7 @@ event_queue_init (event_queue_t* eq, session_t* s)
 
     list_init (&eq->events);
     pthread_mutex_init (&eq->events_lock, NULL);
+    pthread_cond_init (&eq->events_cond, NULL);
     sem_init (&eq->events_count, 0, 0);
 
     eq->session = s;
@@ -64,25 +65,55 @@ event_queue_push (event_queue_t* eq, event_t* e)
     ev->e = e;
     pthread_mutex_lock (&eq->events_lock);
     list_push_back (&eq->events, &ev->elem);
+    eq->events_count++;
+
     pthread_mutex_unlock (&eq->events_lock);
-    sem_post (&eq->events_count);
 
     printf ("pushed: %s\n", e->message);
 
     return true;
 };
 
-event_t*
-event_queue_shift (event_queue_t* eq)
+void 
+event_queue_signal (event_queue_t* eq)
 {
-    ASSERT (eq);
+    ASSERT (eq);    
 
     pthread_mutex_lock (&eq->events_lock);
+    pthread_cond_signal (&eq->events_cond);
+    pthread_mutex_unlock (&eq->events_lock);
+};
+
+event_t*
+event_queue_shift (event_queue_t* eq, int* num_left)
+{
+    ASSERT (eq);
+    ASSERT (num_left);
+
+    pthread_mutex_lock (&eq->events_lock);
+    if (eq->events_count == 0)
+    {
+        /*
+         * If there are no elements in this queue, we're going to wait until
+         * we're signalled that new elements have arrived.
+         * */
+        pthread_cond_wait (&eq->events_cond, &eq->events_lock);
+    }
+    /*
+     * List should not be empty now 
+     * */
+    ASSERT (!list_empty (&eq->events));
+    ASSERT (0 < eq->events_count);
+
     struct list_elem* e = list_front (&eq->events);
     ASSERT (e);
     list_remove (e);
+    *num_left = --eq->events_count;
     pthread_mutex_unlock (&eq->events_lock);
 
+    /*
+     * Convert to event_t object
+     * */
     struct eq_event* ev = LIST_ENTRY(e, struct eq_event, elem);
     ASSERT (ev);
 
