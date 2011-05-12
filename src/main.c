@@ -24,7 +24,8 @@ static struct mg_context* context;
 static const char* options[] = {
         "access_log_file", "logs/access"
     ,   "listening_ports", "8082"
-    ,   "num_threads", "5"
+    ,   "num_threads", "5"              // For listening
+    ,   "num_processing_threads", "10"  // For processing requests
     ,   NULL
 };
 //static const char** options = NULL;
