@@ -3,6 +3,7 @@
 
 #include <pthread.h>
 
+#include "type.h"
 #include "lib/mongoose.h"
 #include "user.h"
 #include "session.h"
@@ -38,11 +39,8 @@ enum thread_state_t
 
 typedef struct
 {
-    pthread_mutex_t* lock;
-} thread_pool_cond_t;
+    struct list_elem elem;
 
-typedef struct
-{
     enum thread_state_t state;
     enum mg_event event;
     struct mg_connection* conn;
@@ -53,5 +51,12 @@ typedef struct
     session_t* session;
     event_queue_t* eq;
 } thread_pool_task_t;
+
+bool init_thread_pool (int num_processing_threads);
+bool thread_pool_add_new_task (enum mg_event, struct mg_connection*, const struct mg_request_info*);
+bool thread_pool_add_in_progress_task (struct mg_connection*, const struct mg_request_info*, 
+        user_t*, session_t*, event_queue_t*);
+thread_pool_task_t* thread_pool_get_task ();
+void thread_pool_free_task (thread_pool_task_t*);
 
 #endif //THREAD_POOL_H
