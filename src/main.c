@@ -78,13 +78,18 @@ main (int argc, char** argv)
 
 void* 
 mg_callback_func (enum mg_event event, struct mg_connection* conn, 
-        const struct mg_request_info* info)
+        const struct mg_request_info* info, int* result)
 {
-    (event_func_table[event])(conn, info);
+    *result = 0;
+    if ((event_func_table[event])(conn, info))
+    {
+        *result = 1;
+    }
     return (void*)1;
 };
 
-void* mg_new_request_func (struct mg_connection* conn,
+void* 
+mg_new_request_func (struct mg_connection* conn,
         const struct mg_request_info* info)
 {
     /*
@@ -118,21 +123,23 @@ void* mg_new_request_func (struct mg_connection* conn,
     protocol_info_t pinfo;
     response_t response;
     reqtype_t t = protocol_eval (&pinfo, content, info);
-    user_func_table[t] (&response, &pinfo, content, info);
+    bool result = user_func_table[t] (&response, &pinfo, content, info);
 
     printf ("received new request\n");
     mg_printf (conn, "%s%s\n", response_header, response.message);
-    return NULL;
+    return (!result ? 0xffffffff : NULL);
 };
 
-void* mg_http_error_func (struct mg_connection* conn,
+void* 
+mg_http_error_func (struct mg_connection* conn,
         const struct mg_request_info* info)
 {
     
     return NULL;
 };
 
-void* mg_event_log_func (struct mg_connection* conn,
+void* 
+mg_event_log_func (struct mg_connection* conn,
         const struct mg_request_info* info)
 {
     
@@ -143,7 +150,8 @@ void* mg_event_log_func (struct mg_connection* conn,
  * TODO: implement this one day.
  * Currently no plans to implement this.
  * */
-void* mg_init_ssl (struct mg_connection* conn,
+void* 
+mg_init_ssl (struct mg_connection* conn,
         const struct mg_request_info* info)
 {
     return NULL;

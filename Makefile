@@ -1,6 +1,7 @@
 SRCFOLDER= src
 SOURCES= $(SRCFOLDER)/lib/mongoose.o \
 		 $(SRCFOLDER)/functions.o \
+		 $(SRCFOLDER)/lib/thread_pool.o \
 		 $(SRCFOLDER)/lib/list.o \
 		 $(SRCFOLDER)/lib/hash.o \
 		 $(SRCFOLDER)/protocol.o \

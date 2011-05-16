@@ -53,6 +53,8 @@ typedef struct
 } thread_pool_task_t;
 
 bool init_thread_pool (int num_processing_threads);
+void thread_pool_relinquish_thread (struct mg_connection*, 
+        const struct mg_request_info*, user_t*, session_t*, event_queue_t*);
 bool thread_pool_add_new_task (enum mg_event, struct mg_connection*, const struct mg_request_info*);
 bool thread_pool_add_in_progress_task (struct mg_connection*, const struct mg_request_info*, 
         user_t*, session_t*, event_queue_t*);

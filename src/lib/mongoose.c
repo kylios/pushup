@@ -457,9 +457,9 @@ const char **mg_get_valid_option_names(void) {
   return config_options;
 }
 
-static void *call_user(struct mg_connection *conn, enum mg_event event) {
+static void *call_user(struct mg_connection *conn, enum mg_event event, int* ret) {
   return conn->ctx->user_callback == NULL ? NULL :
-    conn->ctx->user_callback(event, conn, &conn->request_info);
+    conn->ctx->user_callback(event, conn, &conn->request_info, ret);
 }
 
 static int get_option_index(const char *name) {
@@ -3170,7 +3170,7 @@ static void handle_ssi_file_request(struct mg_connection *conn,
 // This function is called when the request is read, parsed and validated,
 // and Mongoose must decide what action to take: serve a file, or
 // a directory, or call embedded function, etcetera.
-static void handle_request(struct mg_connection *conn) {
+static int handle_request(struct mg_connection *conn) {
   struct mg_request_info *ri = &conn->request_info;
   char path[PATH_MAX];
   int uri_len;
@@ -3185,8 +3185,11 @@ static void handle_request(struct mg_connection *conn) {
   convert_uri_to_file_name(conn, ri->uri, path, sizeof(path));
 
   DEBUG_TRACE(("%s", ri->uri));
-  if (call_user(conn, MG_NEW_REQUEST) != NULL) {
-    // Do nothing, callback has served the request
+  int ret = 0;
+  if (call_user(conn, MG_NEW_REQUEST, &ret) != NULL) {
+      if (ret) {
+          return 1;
+      }
   } else if (!check_authorization(conn, path)) {
     send_authorization_request(conn);
   } else if (strstr(path, PASSWORDS_FILE_NAME)) {
@@ -3237,6 +3240,8 @@ static void handle_request(struct mg_connection *conn) {
   } else {
     handle_file_request(conn, path, &st);
   }
+
+  return 0;
 }
 
 static void close_all_listening_sockets(struct mg_context *ctx) {
@@ -3728,7 +3733,7 @@ static void handle_proxy_request(struct mg_connection *conn) {
   }
 }
 
-static void process_new_connection(struct mg_connection *conn) {
+static int process_new_connection(struct mg_connection *conn) {
   struct mg_request_info *ri = &conn->request_info;
   int keep_alive_enabled;
   const char *cl;
@@ -3751,6 +3756,7 @@ static void process_new_connection(struct mg_connection *conn) {
       return;  // Remote end closed the connection
     }
 
+    int ret = 0;
     // Nul-terminate the request cause parse_http_request() uses sscanf
     conn->buf[conn->request_len - 1] = '\0';
     if (!parse_http_request(conn->buf, ri) ||
@@ -3771,13 +3777,18 @@ static void process_new_connection(struct mg_connection *conn) {
       if (conn->client.is_proxy) {
         handle_proxy_request(conn);
       } else {
-        handle_request(conn);
+        ret = handle_request(conn);
       }
       log_access(conn);
+      if (ret) {
+          return 1;
+      }
       discard_current_request_from_buffer(conn);
     }
     // conn->peer is not NULL only for SSL-ed proxy connections
   } while (conn->peer || (keep_alive_enabled && should_keep_alive(conn)));
+
+  return 0;
 }
 
 // Worker threads take accepted socket from the queue
@@ -3836,12 +3847,18 @@ static void worker_thread(struct mg_context *ctx) {
     conn->request_info.remote_ip = ntohl(conn->request_info.remote_ip);
     conn->request_info.is_ssl = conn->client.is_ssl;
 
+    // Modified by Kyle Racette, 5/14/2011
+    int close = 1;
     if (!conn->client.is_ssl ||
         (conn->client.is_ssl && sslize(conn, SSL_accept))) {
-      process_new_connection(conn);
+      if (process_new_connection(conn)) {
+          close = 0;
+      }
     }
 
-    close_connection(conn);
+    if (close) {
+        close_connection(conn);
+    }
   }
   free(conn);
 

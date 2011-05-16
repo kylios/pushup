@@ -121,40 +121,68 @@ update_user_session (const char* uid, const char* sid, char* message,
     struct hash_elem* el = hash_find (&user->session_queues, &temp.elem, NULL);
     if (el == NULL)
     {
-        // TODO: in this case, we should create a queue in the hash instead of
-        // return an error.
-        return false;
+        user_register (user, session);
+        el = hash_find (&user->session_queues, &temp.elem, NULL);
+        ASSERT (el);
     }
     eq = HASH_ENTRY (el, event_queue_t, elem);
     ASSERT (eq);
 
-    // TODO: wait until events come in for us
-    int count;
-    int num = 0;
-    int num_left;
-
-    do
+    // TODO: maybe just skip this check?
+    pthread_mutex_lock (&eq->events_lock);
+    while (list_empty (&eq->events))
     {
-        event = event_queue_shift (eq, &num_left);
+        pthread_mutex_unlock (&eq->events_lock);
 
-        /*
-         * Concatenate this text to events_content
-         * */
-        if (num > 0)  strncat (message, ",", 1);
-        strncat (message, event->message, event->message_size);
+        // Stop this thread now
+        thread_pool_relinquish_thread ();
 
-        event_done (event);
-        
-        if (sem_getvalue (&eq->events_count, &count) || 0 >= count)
-        {
-            break;
-        }
-
-        num++;
+        return NULL;
     }
-    while (num_left);
+    pthread_mutex_unlock (&eq->events_lock);
+
+    /*
+     * Call the callback function that the thread *would* have called had this
+     * thread been blocked.*/
+    user_update_func_cb (user, session, eq);
+
+    return true;
+};
+
+void
+user_update_func_cb (user_t* user, session_t* session, event_queue_t* eq)
+{
+    ASSERT (user);
+    ASSERT (session);
+    ASSERT (eq);
+    
+    pthread_mutex_lock (&eq->events_lock);
+    while (list_empty (&eq->events))
+    {
+        pthread_mutex_unlock (&eq->events_lock);
+
+
+        pthread_mutex_lock (&eq->events_lock);
+    }
+    pthread_mutex_unlock (&eq->events_lock);
+
+
+    event = event_queue_shift (eq, &num_left);
+
+    /*
+     * Concatenate this text to events_content
+     * */
+    if (num > 0)  strncat (message, ",", 1);
+    strncat (message, event->message, event->message_size);
+
+    event_done (event);
+    
+    if (sem_getvalue (&eq->events_count, &count) || 0 >= count)
+    {
+        break;
+    }
+
 
     strncat (message, "]", 1);
 
-    return true;
 };

@@ -30,7 +30,7 @@ typedef bool (*user_event_func)
  * and SSL requests.
  * */
 void* mg_callback_func (enum mg_event event, struct mg_connection* conn, 
-        const struct mg_request_info* info);
+        const struct mg_request_info* info, int* result);
 
 /**
  * The handler functions for the mongoose events.
