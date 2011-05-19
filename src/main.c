@@ -285,10 +285,14 @@ user_update_func (response_t* r, protocol_info_t* pinfo,
             r->success = false;
             return true;
         }
-        r->code = 500;
-        r->message = "Server ran out of memory";
-        r->success = false;
-        return true;
+
+        /*
+         * If this is the case, we have to relinquish control of this thread.  
+         * update_user_session should have stored the thread state in the global
+         * data structure, so all we need to do is tell mongoose to give up that
+         * task for the time being.
+         * */
+        return false;
     }
 
     r->code = 200;

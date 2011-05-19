@@ -75,16 +75,18 @@ thread_func (void* AUX)
 void 
 thread_pool_relinquish_thread (struct mg_connection* conn, 
         const struct mg_request_info* info,
-        user_t* user, session_t* session, event_queue_t* eq)
+        user_t* user, session_t* session, event_queue_t* eq,
+        char* message)
 {
     ASSERT (conn);
     ASSERT (info);
     ASSERT (user);
     ASSERT (session);
     ASSERT (eq);
+    ASSERT (message);
 
     thread_pool_task_t* t = thread_pool_add_in_progress_task (conn, info,
-            user, session, eq);
+            user, session, eq, message);
 };
 
 static inline thread_pool_task_t*
@@ -130,13 +132,15 @@ thread_pool_add_new_task (enum mg_event event, struct mg_connection* conn,
 bool 
 thread_pool_add_in_progress_task (struct mg_connection* conn, 
         const struct mg_request_info* info, 
-        user_t* user, session_t* session, event_queue_t* eq)
+        user_t* user, session_t* session, event_queue_t* eq,
+        char* message)
 {
     ASSERT (conn);
     ASSERT (info);
     ASSERT (user);
     ASSERT (session);
     ASSERT (eq);
+    ASSERT (message);
 
     thread_pool_task_t* t = create_new_task ();
     if (NULL == t)
@@ -149,6 +153,7 @@ thread_pool_add_in_progress_task (struct mg_connection* conn,
     t->user = user;
     t->session = session;
     t->eq = eq;
+    t->message = message;
 
     pthread_mutex_lock (&jobs_lock);
     list_push_back (&jobs, &t->elem);

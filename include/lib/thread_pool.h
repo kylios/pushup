@@ -50,14 +50,15 @@ typedef struct
     user_t* user;
     session_t* session;
     event_queue_t* eq;
+    char* message;
 } thread_pool_task_t;
 
 bool init_thread_pool (int num_processing_threads);
 void thread_pool_relinquish_thread (struct mg_connection*, 
-        const struct mg_request_info*, user_t*, session_t*, event_queue_t*);
+        const struct mg_request_info*, user_t*, session_t*, event_queue_t*, char* message);
 bool thread_pool_add_new_task (enum mg_event, struct mg_connection*, const struct mg_request_info*);
 bool thread_pool_add_in_progress_task (struct mg_connection*, const struct mg_request_info*, 
-        user_t*, session_t*, event_queue_t*);
+        user_t*, session_t*, event_queue_t*, char*);
 thread_pool_task_t* thread_pool_get_task ();
 void thread_pool_free_task (thread_pool_task_t*);
 

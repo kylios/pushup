@@ -97,9 +97,6 @@ update_user_session (const char* uid, const char* sid, char* message,
     ASSERT (sid);
     ASSERT (message);
 
-    *message = '[';
-    *(message + 1) = '\0';
-
     user_t* user;
     session_t* session;
     event_queue_t* eq;
@@ -128,46 +125,40 @@ update_user_session (const char* uid, const char* sid, char* message,
     eq = HASH_ENTRY (el, event_queue_t, elem);
     ASSERT (eq);
 
-    // TODO: maybe just skip this check?
-    pthread_mutex_lock (&eq->events_lock);
-    while (list_empty (&eq->events))
-    {
-        pthread_mutex_unlock (&eq->events_lock);
-
-        // Stop this thread now
-        thread_pool_relinquish_thread ();
-
-        return NULL;
-    }
-    pthread_mutex_unlock (&eq->events_lock);
-
     /*
      * Call the callback function that the thread *would* have called had this
      * thread been blocked.*/
-    user_update_func_cb (user, session, eq);
-
-    return true;
+    return user_update_func_cb (user, session, eq, message);
 };
 
-void
-user_update_func_cb (user_t* user, session_t* session, event_queue_t* eq)
+bool
+user_update_func_cb (user_t* user, session_t* session, event_queue_t* eq, char* message)
 {
     ASSERT (user);
     ASSERT (session);
     ASSERT (eq);
+    ASSERT (message);
+
+    event_t* event;
+    char* message;
     
     pthread_mutex_lock (&eq->events_lock);
     while (list_empty (&eq->events))
     {
         pthread_mutex_unlock (&eq->events_lock);
 
-
-        pthread_mutex_lock (&eq->events_lock);
+        thread_pool_relinquish_thread ();
+        return false;
     }
-    pthread_mutex_unlock (&eq->events_lock);
-
 
     event = event_queue_shift (eq, &num_left);
+    pthread_mutex_unlock (&eq->events_lock);
+
+    ASSERT (event);
+
+    *message = '[';
+    *(message + 1) = '\0';
+
 
     /*
      * Concatenate this text to events_content
@@ -185,4 +176,5 @@ user_update_func_cb (user_t* user, session_t* session, event_queue_t* eq)
 
     strncat (message, "]", 1);
 
+    return true;
 };

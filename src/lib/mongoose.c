@@ -3777,7 +3777,13 @@ static int process_new_connection(struct mg_connection *conn) {
       if (conn->client.is_proxy) {
         handle_proxy_request(conn);
       } else {
-        ret = handle_request(conn);
+        /*
+         * KPR - 05/16/2011
+         * Instead of calling handle_request here, we should call on the
+         * thread_pool to store this state and have a processing thread begin
+         * handling this request.
+         * */
+        //ret = handle_request(conn);
       }
       log_access(conn);
       if (ret) {
