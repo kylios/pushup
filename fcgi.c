@@ -67,7 +67,8 @@ main (int argc, char** argv)
         else
         {
             printf ("connected \n");
-            while (1){
+            while (1)
+            {
                 struct fcgi_header header;
                 if (-1 == fcgi_read_header (fd, &header))
                 {
@@ -109,8 +110,6 @@ main (int argc, char** argv)
 
                     free (str);
                 }
-                void* nothing = malloc (sizeof (unsigned char) * header.padding_length);
-                recv(fd, nothing, header.padding_length, 0);
             }
             send(fd, send_str, strlen(send_str), 0);
             printf ("connection over \n");
@@ -171,6 +170,7 @@ int
 fcgi_process_abort_request (struct fcgi_header* header, 
         struct fcgi_connection* conn, const char* buf)
 {
+    printf ("abort request \n");
     return 0;    
 };
 
@@ -178,6 +178,7 @@ int
 fcgi_process_end_request (struct fcgi_header* header, 
         struct fcgi_connection* conn, const char* buf)
 {
+    printf ("end request \n");
     return 0;   
 };
 
@@ -187,19 +188,20 @@ fcgi_process_params (struct fcgi_header* header,
 {
     size_t sz = 0;
 
+    printf ("Length: %d \n", header->content_length);
     while (sz < header->content_length)
     {
         unsigned char name_length_0 = *buf++;
-        printf ("NameLength0: %x \n", name_length_0);
+//        printf ("NameLength0: %x \n", name_length_0);
         int name_length = (int) name_length_0;
         if (name_length_0 >> 7) // High-order bit is one
         {
             unsigned char   name_length_1 = *buf++,
                             name_length_2 = *buf++,
                             name_length_3 = *buf++;
-            printf ("NameLength1: %x \n", name_length_1);
-            printf ("NameLength2: %x \n", name_length_2);
-            printf ("NameLength3: %x \n", name_length_3);
+//            printf ("NameLength1: %x \n", name_length_1);
+//            printf ("NameLength2: %x \n", name_length_2);
+//            printf ("NameLength3: %x \n", name_length_3);
             name_length = 
                 ((int) (name_length_3 & 0x7f) << 24) + 
                 (int) (name_length_2 << 16) + 
@@ -207,16 +209,16 @@ fcgi_process_params (struct fcgi_header* header,
                 (int) name_length_0;
         }
         unsigned char value_length_0 = *buf++;
-        printf ("ValueLength0: %x \n", value_length_0);
+//        printf ("ValueLength0: %x \n", value_length_0);
         int value_length = (int) value_length_0;
         if (value_length_0 >> 7)
         {
             unsigned char value_length_1 = *buf++, 
                           value_length_2 = *buf++, 
                           value_length_3 = *buf++;
-            printf ("ValueLength1: %x \n", value_length_1);
-            printf ("ValueLength2: %x \n", value_length_2);
-            printf ("ValueLength3: %x \n", value_length_3);
+//            printf ("ValueLength1: %x \n", value_length_1);
+//            printf ("ValueLength2: %x \n", value_length_2);
+//            printf ("ValueLength3: %x \n", value_length_3);
             value_length = 
                 ((int) (value_length_3 & 0x7f) << 24) + 
                 (int) (value_length_2 << 16) + 
@@ -226,7 +228,7 @@ fcgi_process_params (struct fcgi_header* header,
 
         if (sz + name_length + value_length > header->content_length)
         {
-            return 0;
+            break;
         }
 
         char* name_data = (char*) malloc (sizeof (char) * name_length + 1);
@@ -249,10 +251,11 @@ fcgi_process_params (struct fcgi_header* header,
         value_data[value_length] = '\0';
         buf += value_length;
 
-        printf ("Name Data: %s \n", name_data);
-        printf ("Value Data: %s \n", value_data);
+//        printf ("Name Data: %s \n", name_data);
+//        printf ("Value Data: %s \n", value_data);
 
         sz += name_length + value_length;
+        printf ("sz: %d \n", sz);
     }
 
     return 1;
@@ -262,13 +265,22 @@ int
 fcgi_process_stdin (struct fcgi_header* header, 
         struct fcgi_connection* conn, const char* buf)
 {
-    
+    char* stdin = (char*) malloc (sizeof (char) * header->content_length);
+    if (!stdin)
+    {
+        return 0;
+    }
+
+    memcpy (stdin, buf, header->content_length);
+    printf ("stdin: %s \n", stdin);
+    return 1;
 };
 
 int 
 fcgi_process_stdout (struct fcgi_header* header, 
         struct fcgi_connection* conn, const char* buf)
 {
+    printf ("stdout \n");
     return 0;
 };
 
@@ -276,6 +288,7 @@ int
 fcgi_process_stderr (struct fcgi_header* header, 
         struct fcgi_connection* conn, const char* buf)
 {
+    printf ("stderr \n");
     return 0;
 };
 
@@ -283,6 +296,7 @@ int
 fcgi_process_data (struct fcgi_header* header, 
         struct fcgi_connection* conn, const char* buf)
 {
+    printf ("data \n");
     return 0;
 };
 
@@ -290,6 +304,7 @@ int
 fcgi_process_get_values (struct fcgi_header* header, 
         struct fcgi_connection* conn, const char* buf)
 {
+    printf ("get values \n");
     return 0;
 };
 
@@ -297,6 +312,7 @@ int
 fcgi_process_get_values_result (struct fcgi_header* header, 
         struct fcgi_connection* conn, const char* buf)
 {
+    printf ("get values result \n");
     return 0;
 };
 
@@ -304,6 +320,7 @@ int
 fcgi_process_unknown_type (struct fcgi_header* header, 
         struct fcgi_connection* conn, const char* buf)
 {
+    printf ("unknown type \n");
     return 0;
 };
 
