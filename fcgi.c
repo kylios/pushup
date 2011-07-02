@@ -1,18 +1,121 @@
+#include <shm.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "fcgi.h"
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <sys/wait.h>
-#include <signal.h>
-#include <unistd.h>
+enum fcgi_type
+{
+    BEGIN_REQUEST = 1,
+    ABORT_REQUEST = 2,
+    END_REQUEST = 3,
+    PARAMS = 4,
+    STDIN = 5,
+    STDOUT = 6,
+    STDERR = 7,
+    DATA = 8,
+    GET_VALUES = 9,
+    GET_VALUES_RESULT = 10,
+    UNKNOWN_TYPE = 11
+};
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+enum fcgi_protocol_status
+{
+    REQUEST_COMPLETE = 0,
+    CANT_MPX_CONN = 1,
+    OVERLOADED = 2,
+    UNKNOWN_ROLE = 3
+};
+
+struct fcgi_header
+{
+    int version;
+    enum fcgi_type type;
+    int request_id;
+    size_t content_length;
+    size_t padding_length;
+};
+
+struct literal_fcgi_header
+{
+    unsigned char version;
+    unsigned char type;
+    unsigned char request_id_1;
+    unsigned char request_id_0;
+    unsigned char content_length_1;
+    unsigned char content_length_0;
+    unsigned char padding_length;
+    unsigned char reserved;
+};
+
+struct fcgi_begin_request_body 
+{
+    unsigned char role_1;
+    unsigned char role_0;
+    unsigned char flags;
+    unsigned char reserved[5];
+};
+
+struct fcgi_end_request_body
+{
+    unsigned char app_status_3;
+    unsigned char app_status_2;
+    unsigned char app_status_1;
+    unsigned char app_status_0;
+    unsigned char protocol_status;
+    unsigned char reserved;
+};
+
+typedef int fcgi_record_processing_func (struct fcgi_header*, 
+        struct fcgi_connection*, const char* buf);
+
+struct fcgi_header* tmp_XheaderX_dontuse;
+#define FCGI_SEND(__tmp_XheaderX_dontuse, fd, _version, _request_id, _type, sz, data) \
+    tmp_XheaderX_dontuse = (__tmp_XheaderX_dontuse); \
+    memset ((tmp_XheaderX_dontuse), 0, (sizeof (struct fcgi_header))); \
+    tmp_XheaderX_dontuse->version = (_version);  \
+    tmp_XheaderX_dontuse->request_id = (_request_id);  \
+    tmp_XheaderX_dontuse->type = (_type);  \
+    tmp_XheaderX_dontuse->content_length = (sz);  \
+    tmp_XheaderX_dontuse->padding_length = 0;   \
+    fcgi_send_packet ((fd), tmp_XheaderX_dontuse, (const char*) (data)); 
+    
+int fcgi_send_packet (int fd, struct fcgi_header* header, const char* buf);
+
+int fcgi_process_begin_request (struct fcgi_header*, struct fcgi_connection*, 
+        const char* buf);
+int fcgi_process_abort_request (struct fcgi_header*, struct fcgi_connection*, 
+        const char* buf);
+int fcgi_process_end_request (struct fcgi_header*, struct fcgi_connection*, 
+        const char* buf);
+int fcgi_process_params (struct fcgi_header*, struct fcgi_connection*, 
+        const char* buf);
+int fcgi_process_stdin (struct fcgi_header*, struct fcgi_connection*, 
+        const char* buf);
+int fcgi_process_stdout (struct fcgi_header*, struct fcgi_connection*, 
+        const char* buf);
+int fcgi_process_stderr (struct fcgi_header*, struct fcgi_connection*, 
+        const char* buf);
+int fcgi_process_data (struct fcgi_header*, struct fcgi_connection*, 
+        const char* buf);
+int fcgi_process_get_values (struct fcgi_header*, struct fcgi_connection*,
+        const char* buf);
+int fcgi_process_get_values_result (struct fcgi_header*, struct fcgi_connection*, 
+        const char* buf);
+int fcgi_process_unknown_type (struct fcgi_header*, struct fcgi_connection*, 
+        const char* buf);
+
+
+/*
+ * Use this to keep track of all the connections
+ * */
+static struct fcgi_connection* connections[MAX_REQUESTS];
+
+
+static int fcgi_read_header (int fd, struct fcgi_header* header);
+static void fcgi_dump_header (struct fcgi_header* header);
+
+
 
 static const char* send_str = 
 "Content-Type: text/html \r\n"
@@ -21,12 +124,10 @@ static const char* send_str =
 
 static fcgi_record_processing_func *fcgi_handlers[12];
 
-int bind_to_localhost (const char* port, int ipver, int* sockfd);
-
 struct fcgi_connection* fcgi_lookup_connection (int request_id);
 
-int
-main (int argc, char** argv)
+void
+fcgi_init ()
 {
     fcgi_handlers[BEGIN_REQUEST] = fcgi_process_begin_request;
     fcgi_handlers[ABORT_REQUEST] = fcgi_process_abort_request;
@@ -40,91 +141,114 @@ main (int argc, char** argv)
     fcgi_handlers[GET_VALUES_RESULT] = &fcgi_process_get_values_result;
     fcgi_handlers[UNKNOWN_TYPE] = &fcgi_process_unknown_type;
 
-    struct sockaddr_storage client_addr;
-    socklen_t sin_size;
-    struct sockaddr_storage their_addr;
-    int sockfd;
-    const char* port = "13337";
+    // Clear the connections table
+    memset (connections, 0, sizeof (struct fcgi_connection*) * MAX_REQUESTS);
 
-    if (-1 == bind_to_localhost (port, 4, &sockfd))
-    {
-        printf ("FAIL\n");
-    }
-    if (-1 == listen (sockfd, 5))
-    {
-        printf ("FAIL2\n");
-    }
+    // TODO: init the data structures and threads necessary for keeping track of
+    // each request
+};
 
-    int run = 1;
-    while (run)
+struct fcgi_connection*
+fcgi_loop (int fd)
+{
+    struct fcgi_connection* conn;
+
+    enum fcgi_type last_request = UNKNOWN_TYPE;
+    while (last_request != STDIN)
     {
-        int fd = accept (sockfd, (struct sockaddr*) &their_addr, &sin_size);
-        if (-1 == fd)
+        struct fcgi_header header;
+        if (-1 == fcgi_read_header (fd, &header))
         {
-            printf ("CONNECTION FAIL \n");
-            continue;
+            break;
         }
-        else
+        fcgi_dump_header (&header);
+        struct fcgi_connection* conn = 
+            fcgi_lookup_connection (header.request_id);
+        if (!conn)
         {
-            printf ("connected \n");
-            while (1)
+            // Allocate a new connection object
+            conn = (struct fcgi_connection*) 
+                malloc (sizeof (struct fcgi_connection));
+            fcgi_init_connection (conn);
+            conn->fd = fd;
+        }
+        if (header.content_length > 0) 
+        {
+            // Allocate a buffer to hold the Content and padding
+            char* str = (char*) malloc (sizeof (char) * 
+                    (header.content_length + header.padding_length));
+            if (!str) 
             {
-                struct fcgi_header header;
-                if (-1 == fcgi_read_header (fd, &header))
-                {
-                    break;
-                }
-                fcgi_dump_header (&header);
-                struct fcgi_connection* conn = 
-                    fcgi_lookup_connection (header.request_id);
-                if (!conn)
-                {
-                    // Allocate a new connection object
-                    conn = (struct fcgi_connection*) 
-                        malloc (sizeof (struct fcgi_connection));
-                }
-                if (header.content_length > 0) 
-                {
-                    // Allocate a buffer to hold the Content and padding
-                    char* str = (char*) malloc (sizeof (char) * 
-                            (header.content_length + header.padding_length));
-                    if (!str) 
-                    {
-                        break;
-                    }
-                    if (!recv (fd, str, 
-                            header.content_length + header.padding_length, 0))
-                    {
-                        free(str);
-                        break;
-                    }
-
-                    // Call the respective handler function for the type of
-                    // packet.
-                    if (!fcgi_handlers[header.type] 
-                            (&header, conn, str))
-                    {
-                        free (str);
-                        break;
-                    }
-
-                    free (str);
-                }
+                break;
             }
-            send(fd, send_str, strlen(send_str), 0);
-            printf ("connection over \n");
+            if (!recv (fd, str, 
+                    header.content_length + header.padding_length, 0))
+            {
+                free(str);
+                break;
+            }
+
+            // Call the respective handler function for the type of
+            // packet.
+            if (!fcgi_handlers[header.type] 
+                    (&header, conn, str))
+            {
+                free (str);
+                break;
+            }
+
+            free (str);
         }
+        last_request = header.type;
     }
+    return 1;
+};
+
+void
+fcgi_init_connection (struct fcgi_connection* conn)
+{
+    memset (conn, 0, sizeof (*conn));
+    conn->stdin = shm_open ("stdin", O_RDONLY | O_CREAT, S_IRUSR | S_IRGRP);
+    conn->stdout = shm_open ("stdout", O_RDONLY | O_CREAT, S_IRUSR | S_IRGRP);
+    conn->stderr = shm_open ("stderr", O_RDONLY | O_CREAT, S_IRUSR | S_IRGRP);
+};
+
+int
+fcgi_write (struct fcgi_connection* conn, size_t sz, const char* buf)
+{
+
+    struct fcgi_header x;
+    FCGI_SEND(&x, fd, 1, 1, STDOUT, strlen (send_str), send_str);
+};
+
+int
+fcgi_end (struct fcgi_connection* conn, enum fcgi_protocol_status, int app_status)
+{
+    CHECK_PTR(conn);
+
+    struct fcgi_end_request_body end;
+    end.protocol_status = REQUEST_COMPLETE;
+    end.app_status_3 = (unsigned char) (app_status & 0xff000000) >> 24;
+    end.app_status_2 = (unsigned char) (app_status & 0x00ff0000) >> 16;
+    end.app_status_1 = (unsigned char) (app_status & 0x0000ff00) >> 8;
+    end.app_status_0 = (unsigned char) app_status & 0x000000ff;
+
+    struct fcgi_header x;
+    FCGI_SEND (&x, fd, 1, 1, END_REQUEST, sizeof (struct fcgi_end_request_body), (const char*) &end);
+
+    close (conn->fd);    
 };
 
 int 
 fcgi_read_header (int fd, struct fcgi_header* header)
 {
+    printf ("reading header...\n");
     struct literal_fcgi_header h;
     if (!recv (fd, &h, sizeof (h), 0))
     {
         return -1;
     }
+    printf ("done reading header \n");
 
     header->version = (int) h.version;
     header->type = (enum fcgi_type) h.type;
@@ -147,14 +271,51 @@ fcgi_dump_header (struct fcgi_header* header)
     printf ("padding_length: %d \n", header->padding_length);
 };
 
+inline int 
+fcgi_send_packet (int fd, struct fcgi_header* header, const char* buf)
+{
+    if (!header)
+    {
+        return 0;
+    }
+
+    struct literal_fcgi_header h;
+    h.version = (unsigned char) header->version;
+    h.type = (unsigned char) header->type;
+    h.request_id_1 = (unsigned char) (header->request_id >> 8);
+    h.request_id_0 = (unsigned char) (header->request_id);
+    h.content_length_1 = (unsigned char) (header->content_length >> 8);
+    h.content_length_0 = (unsigned char) header->content_length;
+    h.padding_length = (unsigned char) header->padding_length;
+
+    printf ("version: %x \n", h.version);
+    printf ("type: %x \n", h.type);
+    printf ("request_id_1: %x \n", h.request_id_1);
+    printf ("request_id_0: %x \n", h.request_id_0);
+    printf ("content_length_1: %x \n", h.content_length_1);
+    printf ("content_length_0: %x \n", h.content_length_0);
+    printf ("padding_length: %x \n", h.padding_length);
+    
+    send (fd, &h, sizeof (struct literal_fcgi_header), 0);
+    send (fd, buf, header->content_length, 0);
+    
+    return 1;
+};
+
+#define CHECK_PTR(ptr) \
+    if (!(ptr)) \
+    { \
+        return 0; \
+    }
+
 int 
 fcgi_process_begin_request (struct fcgi_header* header, 
         struct fcgi_connection* conn, const char* buf)
 {
-    if (!conn)
-    {
-        return 0;
-    }
+    CHECK_PTR(header);
+    CHECK_PTR(conn);
+    CHECK_PTR(buf);
+
     struct fcgi_begin_request_body* b = 
         (struct fcgi_begin_request_body*) buf;
 
@@ -174,6 +335,9 @@ fcgi_process_abort_request (struct fcgi_header* header,
     return 0;    
 };
 
+/*
+ * Probably not called ever.
+ * */
 int 
 fcgi_process_end_request (struct fcgi_header* header, 
         struct fcgi_connection* conn, const char* buf)
@@ -186,10 +350,10 @@ int
 fcgi_process_params (struct fcgi_header* header, 
         struct fcgi_connection* conn, const char* buf)
 {
-    size_t sz = 0;
+    const char* _buf = buf;
 
     printf ("Length: %d \n", header->content_length);
-    while (sz < header->content_length)
+    while (_buf + header->content_length > buf)
     {
         unsigned char name_length_0 = *buf++;
 //        printf ("NameLength0: %x \n", name_length_0);
@@ -226,11 +390,6 @@ fcgi_process_params (struct fcgi_header* header,
                 (int) value_length_0;
         }
 
-        if (sz + name_length + value_length > header->content_length)
-        {
-            break;
-        }
-
         char* name_data = (char*) malloc (sizeof (char) * name_length + 1);
         if (!name_data)
         {
@@ -251,11 +410,8 @@ fcgi_process_params (struct fcgi_header* header,
         value_data[value_length] = '\0';
         buf += value_length;
 
-//        printf ("Name Data: %s \n", name_data);
-//        printf ("Value Data: %s \n", value_data);
-
-        sz += name_length + value_length;
-        printf ("sz: %d \n", sz);
+        printf ("Name Data: %s \n", name_data);
+        printf ("Value Data: %s \n", value_data);
     }
 
     return 1;
@@ -327,7 +483,7 @@ fcgi_process_unknown_type (struct fcgi_header* header,
 struct fcgi_connection* 
 fcgi_lookup_connection (int request_id)
 {
-    return NULL;    
+    return connections[request_id - 1];    
 };
 
 
@@ -336,94 +492,3 @@ fcgi_lookup_connection (int request_id)
 
 
 
-
-
-
-int
-bind_to_localhost (const char* port, int ipver, int* sockfd)
-{
-    struct addrinfo hints;
-    struct addrinfo* servinfo;
-    struct addrinfo* p;
-
-    /* Set up the addrinfo struct to
-    * * -Use ipv4 or ipv6, whichever was specified
-    * * -Use a stream socket
-    * * -Use passive mode
-    * * */
-    memset (&hints, 0, sizeof hints);
-    hints.ai_family = AF_UNSPEC;//(ipver == 4 ? AF_INET : AF_INET6);
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = AI_PASSIVE;
-
-    int rv;
-    if ((rv = getaddrinfo (NULL, port, &hints, &servinfo)) != 0)
-    {
-        printf ("getaddrinfo: %s", gai_strerror (rv));
-        return -1;
-    }
-
-    /* Find an address to bind to. Since we just need to bind to ourselves,
-    * * this should not fail.
-    * * */
-    int yes = 1;
-    int fd;
-
-    char ipstr[INET6_ADDRSTRLEN];
-    for (p = servinfo; p != NULL; p = p->ai_next)
-    {
-        char* ipver_str;
-        void* addr;
-
-        if (p->ai_family == AF_INET)
-        {
-            struct sockaddr_in* ipv4 = (struct sockaddr_in*) p->ai_addr;
-            addr = &(ipv4->sin_addr);
-            ipver_str = "IPv4";
-        }
-        else
-        {
-            struct sockaddr_in6* ipv6 = (struct sockaddr_in6*) p->ai_addr;
-            addr = &(ipv6->sin6_addr);
-            ipver_str = "IPv6";
-        }
-
-        inet_ntop (p->ai_family, addr, ipstr, sizeof ipstr);
-        printf ("scanning %s: %s...\n", ipver_str, ipstr);
-
-        if ((fd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) 
-        {
-            printf ("socket");
-            continue;
-        }
-
-        if (setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof (int)) == -1) 
-        {
-            printf ("setsockopt");
-            close (fd);
-            return -1;
-        }
-           
-        if (bind (fd, p->ai_addr, p->ai_addrlen) == -1) 
-        {
-            close(fd);
-            printf ("bind");
-            continue;
-        }
-
-        break;
-    }
-
-    if (p == NULL)
-    {
-        printf ("failed to bind");
-        return -1;
-    }
-
-    freeaddrinfo(servinfo); // all done with this structure
-
-    /* This is the socket we'll return to the caller */
-    *sockfd = fd;
-
-    return 0;
-}
