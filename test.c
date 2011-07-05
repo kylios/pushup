@@ -1,6 +1,3 @@
-#include "test.h"
-#include "fcgi.h"
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -15,6 +12,14 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "test.h"
+#include "fcgi.h"
+
+
+static const char* send_str = 
+"Content-Type: text/html \r\n"
+"\r\n"
+"hello";
 
 int 
 main (int argc, char** argv)
@@ -24,6 +29,8 @@ main (int argc, char** argv)
     struct sockaddr_storage their_addr;
     int sockfd;
     const char* port = "8082";
+
+    fcgi_init ();
 
     if (-1 == bind_to_localhost (port, 4, &sockfd))
     {
@@ -44,11 +51,26 @@ main (int argc, char** argv)
         }
         else
         {
-            struct fcgi_request* request = fcgi_loop (fd);
+            struct fcgi_connection* request = fcgi_loop (fd);
             if (request == NULL)
             {
                 break;
             }
+            printf ("Loop finished: \n");
+            printf ("request_id: %d \n", request->request_id);
+            printf ("role: %d \n", request->role);
+            printf ("flags: %c \n", request->flags);
+
+            printf ("Calling fcgi_write...\n");
+            fcgi_write (request, send_str, strlen (send_str));
+
+            printf ("Calling fcgi_end...\n");
+            if (0 == fcgi_end (request, REQUEST_COMPLETE, 0))
+            {
+                printf ("failed...");
+            }
+            printf ("DONE\n");
+
         }
     }
 
