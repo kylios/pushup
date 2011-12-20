@@ -32,6 +32,8 @@ main (int argc, char** argv)
 {
     event_init ();
     init_fcgi ();
+    init_child ();
+    init_pushup ();
 
 //    int listen_fd = bind_unix_socket (SOCKET_PATH);
     int listen_fd = bind_addr_port ("127.0.0.1", 4, SERVER_PORT);
@@ -49,7 +51,19 @@ main (int argc, char** argv)
     event_set (&accept_event, listen_fd, EV_READ | EV_PERSIST, accept_callback, NULL);
     event_add (&accept_event, NULL);
     printf ("dispatching... \n");
-    event_dispatch ();
+    int res = event_dispatch ();
+    if (0 > res)
+    {
+        printf ("event_dispatch error'd \n");    
+    }
+    else if (1 == res)
+    {
+        printf ("no more events ? \n");
+    }
+    else 
+    {
+        printf ("exited normally \n");
+    }
     printf ("FIN. \n");
     close (listen_fd);
     return 0;

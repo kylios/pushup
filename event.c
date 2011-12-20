@@ -19,27 +19,33 @@ accept_callback (int fd, short ev, void* arg)
     socklen_t client_len = sizeof client_addr;
     struct fcgi* client;
 
+    printf ("a\n");
     client_fd = accept (fd, (struct sockaddr*) &client_addr, &client_len);
     if (client_fd < 0)
     {
         return;
     }
+    printf ("b\n");
 
     setnonblock (client_fd);
 
+    printf ("c\n");
     client = calloc (1, sizeof *client);
     if (client == NULL)
     {
         return;
     }
 
+    printf ("d\n");
     client->sockfd = client_fd;
     client->bufev = bufferevent_new (client_fd, 
             buf_read_callback,
             buf_write_callback,
             buf_error_callback,
             (void*) client);
+    printf ("e\n");
     bufferevent_enable (client->bufev, EV_READ);
+    printf ("f\n");
 };
 
 static void 
