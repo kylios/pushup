@@ -1,35 +1,67 @@
-#ifndef FCGI_H
-#define FCGI_H
+#ifndef __FCGI_H
+#define __FCGI_H
 
 #include <stddef.h>
+#include <event.h>
 
-#define MAX_REQUESTS 10
+#include "trie.h"
 
-struct fcgi_connection
+struct fcgi
 {
-    int fd;
     int request_id;
+    int version;
+    int sockfd; 
     int role;
+    struct bufferevent* bufev;
     char flags;
-    int stdin;
-    int stdout;
-    int stderr;
-    char** env;
+
+    /* key => value mapping for environment variables */
+    struct trie env;
+
+    char* _stdin;
 };
 
-enum fcgi_protocol_status
+enum fcgi_type
 {
-    REQUEST_COMPLETE = 0,
-    CANT_MPX_CONN = 1,
-    OVERLOADED = 2,
-    UNKNOWN_ROLE = 3
+    BEGIN_REQUEST = 1,
+    ABORT_REQUEST = 2,
+    END_REQUEST = 3,
+    PARAMS = 4,
+    STDIN = 5,
+    STDOUT = 6,
+    STDERR = 7,
+    DATA = 8,
+    GET_VALUES = 9,
+    GET_VALUES_RESULT = 10,
+    UNKNOWN_TYPE = 11
 };
 
+enum fcgi_role
+{
+    FCGI_RESPONDER = 1,
+    FCGI_AUTHORIZER = 2,
+    FCGI_FILTER = 3
+};
 
-void fcgi_init ();
-struct fcgi_connection* fcgi_loop (int fd);
-int fcgi_end (struct fcgi_connection* conn, enum fcgi_protocol_status status, 
-        int app_status);
+/*
+ * Literal layout of a fastcgi multiplexed frame.
+ * */
+struct frame_header
+{
+    byte version;
+    byte type;
+    byte request_id_1;
+    byte request_id_0;
+    byte content_length_1;
+    byte content_length_0;
+    byte padding_length;
+    byte reserved;
+};
+void init_fcgi ();
+int fcgi_read (const char* str, size_t num, struct bufferevent* in);
 
-#endif //FCGI_H
+void fcgi_env_add (struct fcgi* fcgi, const char* key, const char* val);
+const char* fcgi_env_get (struct fcgi* fcgi, const char* key);
+
+#endif //__FCGI_H
 

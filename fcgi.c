@@ -1,537 +1,465 @@
-#include <sys/shm.h>
+#include <event.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <fcntl.h>
+#include <unistd.h>
+
+#include "type.h"
+#include "debug.h"
 
 #include "fcgi.h"
+#include "networking.h"
+#include "bst.h"
+#include "trie.h"
 
-enum fcgi_type
+/*
+ * The following structs represent literal memory layouts for incoming frames.
+ * These will be used to parse information out of the requests.
+ * */
+
+struct begin_request_body
 {
-    BEGIN_REQUEST = 1,
-    ABORT_REQUEST = 2,
-    END_REQUEST = 3,
-    PARAMS = 4,
-    STDIN = 5,
-    STDOUT = 6,
-    STDERR = 7,
-    DATA = 8,
-    GET_VALUES = 9,
-    GET_VALUES_RESULT = 10,
-    UNKNOWN_TYPE = 11
+    byte role_1;
+    byte role_0;
+    byte flags;
+    byte reserved[5];
+};
+struct end_request_body
+{
+    byte app_status_3;
+    byte app_status_2;
+    byte app_status_1;
+    byte app_status_0;
+    byte protocol_status;
+    byte reserved[3];
+};
+struct name_len_1
+{
+    byte name_length_0;
+};
+struct name_len_4
+{
+    byte name_length_3;
+    byte name_length_2;
+    byte name_length_1;
+    byte name_length_0;
+};
+struct value_len_1
+{
+    byte value_length_0;
+};
+struct value_len_4
+{
+    byte value_length_3;
+    byte value_length_2;
+    byte value_length_1;
+    byte value_length_0;
 };
 
-struct fcgi_header
+
+/*
+ * Data structures to keep track of fast cgi sessions, or connections.  These
+ * objects will be stored in an index structure due to fastcgi's multiplexing,
+ * we will need to access data from different sessions intermittently.
+ * */
+struct frame
 {
-    int version;
     enum fcgi_type type;
     int request_id;
+    int version;
     size_t content_length;
     size_t padding_length;
+    char* content;
+    char* padding;
 };
 
-struct literal_fcgi_header
-{
-    unsigned char version;
-    unsigned char type;
-    unsigned char request_id_1;
-    unsigned char request_id_0;
-    unsigned char content_length_1;
-    unsigned char content_length_0;
-    unsigned char padding_length;
-    unsigned char reserved;
-};
-
-struct fcgi_begin_request_body 
-{
-    unsigned char role_1;
-    unsigned char role_0;
-    unsigned char flags;
-    unsigned char reserved[5];
-};
-
-struct fcgi_end_request_body
-{
-    unsigned char app_status_3;
-    unsigned char app_status_2;
-    unsigned char app_status_1;
-    unsigned char app_status_0;
-    unsigned char protocol_status;
-    unsigned char reserved[3];
-};
-
-typedef int fcgi_record_processing_func (struct fcgi_header*, 
-        struct fcgi_connection*, const char* buf);
-
-#define FCGI_SEND(__tmp_XheaderX_dontuse, fd, _version, _request_id, _type, sz, data) \
-    memset ((__tmp_XheaderX_dontuse), 0, (sizeof (struct fcgi_header))); \
-    __tmp_XheaderX_dontuse->version = (_version);  \
-    __tmp_XheaderX_dontuse->request_id = (_request_id);  \
-    __tmp_XheaderX_dontuse->type = (_type);  \
-    __tmp_XheaderX_dontuse->content_length = (sz);  \
-    __tmp_XheaderX_dontuse->padding_length = (unsigned char) (8 - ((sz) % 8));   \
-    (fcgi_send_packet ((fd), __tmp_XheaderX_dontuse, (const char*) (data)))
-    
-int fcgi_send_packet (int fd, struct fcgi_header* header, const char* buf);
-
-int fcgi_process_begin_request (struct fcgi_header*, struct fcgi_connection*, 
-        const char* buf);
-int fcgi_process_abort_request (struct fcgi_header*, struct fcgi_connection*, 
-        const char* buf);
-int fcgi_process_end_request (struct fcgi_header*, struct fcgi_connection*, 
-        const char* buf);
-int fcgi_process_params (struct fcgi_header*, struct fcgi_connection*, 
-        const char* buf);
-int fcgi_process_stdin (struct fcgi_header*, struct fcgi_connection*, 
-        const char* buf);
-int fcgi_process_stdout (struct fcgi_header*, struct fcgi_connection*, 
-        const char* buf);
-int fcgi_process_stderr (struct fcgi_header*, struct fcgi_connection*, 
-        const char* buf);
-int fcgi_process_data (struct fcgi_header*, struct fcgi_connection*, 
-        const char* buf);
-int fcgi_process_get_values (struct fcgi_header*, struct fcgi_connection*,
-        const char* buf);
-int fcgi_process_get_values_result (struct fcgi_header*, struct fcgi_connection*, 
-        const char* buf);
-int fcgi_process_unknown_type (struct fcgi_header*, struct fcgi_connection*, 
-        const char* buf);
-
-
-#define CHECK_PTR(ptr) \
-    if (!(ptr)) \
-    { \
-        return 0; \
-    }
-
+typedef int process_frame_func (struct frame* f, struct fcgi* fcgi, const char* buf, size_t num);
 
 /*
- * Use this to keep track of all the connections
+ * This structure keeps track of all our fcgi sessions.  Since fcgi is a
+ * multiplexing protocol, we could receive frames from different requests before
+ * any of the requests have completed.  Therefore we need to keep track of all
+ * open requests so that we can apply the incoming frame to its associated session.
+ * Also includes a lock for multithreading.
  * */
-static struct fcgi_connection* connections[MAX_REQUESTS];
+static struct bst_tree _fcgi_sessions;
+static pthread_mutex_t _fcgi_sessions_lock;
+static struct bst_tree* fcgi_sessions = &_fcgi_sessions;
+static pthread_mutex_t* fcgi_sessions_lock = &_fcgi_sessions_lock;
 
+static process_frame_func *handlers[12];
 
-static int fcgi_read_header (int fd, struct fcgi_header* header);
-static void fcgi_dump_header (struct fcgi_header* header);
-void fcgi_init_connection (struct fcgi_connection*, struct fcgi_header*);
+static void fcgi_init (struct fcgi*, struct frame*);
+static struct fcgi* lookup (struct frame* f);
 
-static fcgi_record_processing_func *fcgi_handlers[12];
+static int compare_sessions (const void* a, const void* b, const void* AUX);
 
-struct fcgi_connection* fcgi_lookup_connection (int request_id);
-
-void
-fcgi_init ()
-{
-    fcgi_handlers[BEGIN_REQUEST] = fcgi_process_begin_request;
-    fcgi_handlers[ABORT_REQUEST] = fcgi_process_abort_request;
-    fcgi_handlers[END_REQUEST] = fcgi_process_end_request;
-    fcgi_handlers[PARAMS] = &fcgi_process_params;
-    fcgi_handlers[STDIN] = &fcgi_process_stdin;
-    fcgi_handlers[STDOUT] = &fcgi_process_stdout;
-    fcgi_handlers[STDERR] = &fcgi_process_stderr;
-    fcgi_handlers[DATA] = &fcgi_process_data;
-    fcgi_handlers[GET_VALUES] = &fcgi_process_get_values;
-    fcgi_handlers[GET_VALUES_RESULT] = &fcgi_process_get_values_result;
-    fcgi_handlers[UNKNOWN_TYPE] = &fcgi_process_unknown_type;
-
-    // Clear the connections table
-    memset (connections, 0, sizeof (struct fcgi_connection*) * MAX_REQUESTS);
-
-    // TODO: init the data structures and threads necessary for keeping track of
-    // each request
-};
-
-struct fcgi_connection*
-fcgi_loop (int fd)
-{
-    struct fcgi_connection* conn;
-
-    enum fcgi_type last_request = UNKNOWN_TYPE;
-    while (last_request != STDIN)
-    {
-        struct fcgi_header header;
-        if (-1 == fcgi_read_header (fd, &header))
-        {
-            break;
-        }
-        fcgi_dump_header (&header);
-        conn = 
-            fcgi_lookup_connection (header.request_id);
-        if (!conn)
-        {
-            printf ("allocating new connection... \n");
-            // Allocate a new connection object
-            conn = (struct fcgi_connection*) 
-                malloc (sizeof (struct fcgi_connection));
-            fcgi_init_connection (conn, &header);
-            connections[header.request_id - 1] = conn;
-            conn->fd = fd;
-        }
-        if (header.content_length > 0) 
-        {
-            // Allocate a buffer to hold the Content and padding
-            char* str = (char*) malloc (sizeof (char) * 
-                    (header.content_length + header.padding_length));
-            if (!str) 
-            {
-                break;
-            }
-            if (header.content_length + header.padding_length != recv (fd, str, 
-                    header.content_length + header.padding_length, 0))
-            {
-                free(str);
-                break;
-            }
-            printf ("calling handler function... \n");
-
-            // Call the respective handler function for the type of
-            // packet.
-            if (!fcgi_handlers[header.type] 
-                    (&header, conn, str))
-            {
-                free (str);
-                break;
-            }
-
-            free (str);
-        }
-        last_request = header.type;
-    }
-    return conn;
-};
+static int process_begin_request (struct frame*, struct fcgi*, const char*, size_t num);
+static int process_end_request (struct frame*, struct fcgi*, const char*, size_t num);
+static int process_abort_request (struct frame*, struct fcgi*, const char*, size_t num);
+static int process_params (struct frame*, struct fcgi*, const char*, size_t num);
+static int process_stdin (struct frame*, struct fcgi*, const char*, size_t num);
+static int process_stdout (struct frame*, struct fcgi*, const char*, size_t num);
+static int process_stderr (struct frame*, struct fcgi*, const char*, size_t num);
+static int process_data (struct frame*, struct fcgi*, const char*, size_t num);
+static int process_get_values (struct frame*, struct fcgi*, const char*, size_t num);
+static int process_get_values_result (struct frame*, struct fcgi*, const char*, size_t num);
+static int process_unknown_type (struct frame*, struct fcgi*, const char*, size_t num);
 
 void
-fcgi_init_connection (struct fcgi_connection* conn, struct fcgi_header* h)
+init_fcgi ()
 {
-    memset (conn, 0, sizeof (*conn));
-    conn->request_id = h->request_id;
+    bst_init (fcgi_sessions, compare_sessions);
+    pthread_mutex_init (fcgi_sessions_lock, NULL);
 
-    conn->stdin = shm_open ("stdin", O_RDONLY | O_CREAT, S_IRUSR | S_IRGRP);
-    conn->stdout = shm_open ("stdout", O_RDONLY | O_CREAT, S_IRUSR | S_IRGRP);
-    conn->stderr = shm_open ("stderr", O_RDONLY | O_CREAT, S_IRUSR | S_IRGRP);
+    handlers[BEGIN_REQUEST] = process_begin_request;
+    handlers[ABORT_REQUEST] = process_abort_request;
+    handlers[END_REQUEST] = process_end_request;
+    handlers[PARAMS] = process_params;
+    handlers[STDIN] = process_stdin;
+    handlers[STDOUT] = process_stdout;
+    handlers[STDERR] = process_stderr;
+    handlers[DATA] = process_data;
+    handlers[GET_VALUES] = process_get_values;
+    handlers[GET_VALUES_RESULT] = process_get_values_result;
+    handlers[UNKNOWN_TYPE] = process_unknown_type;
 };
 
 int
-fcgi_write (struct fcgi_connection* conn, size_t sz, const char* buf)
+fcgi_read (const char* data, size_t num, struct bufferevent* in)
 {
+    struct frame_header header;
+    struct frame f;
+    struct fcgi* fcgi;
 
-    struct fcgi_header x;
-    struct fcgi_header* _x = &x;
-    FCGI_SEND(_x, conn->fd, 1, 1, STDOUT, sz, buf);
-};
+    ASSERT (data);
 
-int
-fcgi_end (struct fcgi_connection* conn, enum fcgi_protocol_status status, 
-        int app_status)
-{
-    CHECK_PTR(conn);
+    printf ("reading new frame \n");
 
-    struct fcgi_end_request_body end;
-    end.protocol_status = status;
-    end.app_status_3 = (unsigned char) (app_status & 0xff000000) >> 24;
-    end.app_status_2 = (unsigned char) (app_status & 0x00ff0000) >> 16;
-    end.app_status_1 = (unsigned char) (app_status & 0x0000ff00) >> 8;
-    end.app_status_0 = (unsigned char) app_status & 0x000000ff;
+    // TODO: should we implement some sort of protection here?  there should be
+    // at least enough bytes in data to fill a frame_header struct, but how can
+    // we be sure?
+    memcpy ((void*) &header, (void*) data, sizeof header);
 
-    printf ("status: %x \n", end.protocol_status);
-    printf ("app_status_3: %x \n", end.app_status_3);
-    printf ("app_status_2: %x \n", end.app_status_2);
-    printf ("app_status_1: %x \n", end.app_status_1);
-    printf ("app_status_0: %x \n", end.app_status_0);
+    f.type = (enum fcgi_type) header.type;
+    f.request_id = (int) (header.request_id_1 << 8) + (int) header.request_id_0;
+    f.version = (int) header.version;
+    f.content_length = (size_t)
+        ((int) (header.content_length_1 << 8) + (int) header.content_length_0);
+    f.padding_length = (size_t) ((int) header.padding_length);
 
-    struct fcgi_header x;
-    struct fcgi_header* _x = &x;
-    FCGI_SEND (_x, conn->fd, 1, 1, END_REQUEST, 
-            sizeof (struct fcgi_end_request_body), (const char*) &end);
+    printf ("    type=%d, request_id=%d, content_length=%u, padding_length=%u \n",
+            f.type, f.request_id, f.content_length, f.padding_length);
 
-    close (conn->stdin);
-    close (conn->stdout);
-    close (conn->stderr);
-    close (conn->fd);    
-
-    return 1;
-};
-
-int 
-fcgi_read_header (int fd, struct fcgi_header* header)
-{
-    printf ("reading header...\n");
-    struct literal_fcgi_header h;
-    if (!recv (fd, &h, sizeof (h), 0))
+    /*
+     * Check if the web server actually supplied enough data to fill
+     * content_data and padding_data.  If it didn't, that means the webserver or
+     * client crashed and the connection was severed.
+     * */
+    if (num <= f.content_length + f.padding_length)
     {
+        // TODO: set error code
         return -1;
     }
-    printf ("done reading header \n");
 
-    header->version = (int) h.version;
-    header->type = (enum fcgi_type) h.type;
-    header->request_id = (int) (h.request_id_1 << 8) + (int) h.request_id_0;
-    header->content_length = (size_t)
-        ((int) (h.content_length_1 << 8) + (int) h.content_length_0);
-    header->padding_length = (size_t) ((int) h.padding_length);
+    fcgi = lookup (&f);
+    if (NULL == fcgi)
+    {
+        printf ("Could not find session.  Creating new one \n");
+        fcgi = (struct fcgi*) malloc (sizeof (struct fcgi));
+        if (NULL == fcgi)
+        {
+            // TODO: set error code
+            return -1;
+        }
 
-    return 0;
+        fcgi_init (fcgi, &f);
+        bst_insert (fcgi_sessions, fcgi);
+        printf ("created new session! \n");
+    }
+
+    f.content = (char*) malloc (sizeof (char) * f.content_length);
+    if (NULL == f.content)
+    {
+        printf ("    content_length: %d \n", f.content_length);
+        // TODO: set error code
+        return -1;
+    }
+    f.padding = (char*) malloc (sizeof (char) * f.padding_length);
+    if (NULL == f.padding)
+    {
+        printf ("    padding_length: %d \n", f.padding_length);
+        free (f.content);
+        // TODO: set error code
+        return -1;
+    }
+    if (f.content_length != 
+            bufferevent_read (in, f.content, f.content_length) ||
+        f.padding_length != 
+            bufferevent_read (in, f.padding, f.padding_length))
+    {
+        printf ("a \n");
+        free (f.content);
+        free (f.padding);
+        // TODO: set error code
+        return -1;
+    }
+
+    printf ("reading content...\n");
+    if (!handlers[f.type] (&f, fcgi, f.content, num))
+    {
+        printf ("ahhhh! \n");
+        // TODO: set error code
+        return 0;
+    }
+
+    printf ("returning... \n");
+    return 1;
+};   
+
+static void
+fcgi_init (struct fcgi* fcgi, struct frame* f)
+{
+    ASSERT (fcgi);
+    ASSERT (f);
+
+    fcgi->request_id = f->request_id;
+    fcgi->version = f->version;
+
+    trie_init (&fcgi->env);
 };
 
-
-void 
-fcgi_dump_header (struct fcgi_header* header)
+void
+fcgi_env_add (struct fcgi* fcgi, const char* key, const char* val)
 {
-    printf ("version: %d \n", header->version);
-    printf ("type: %d \n", header->type);
-    printf ("request_id: %d \n", header->request_id);
-    printf ("content_length: %d \n", header->content_length);
-    printf ("padding_length: %d \n", header->padding_length);
+    ASSERT (fcgi);
+    ASSERT (key);
+    ASSERT (val);
+
+    trie_insert (&fcgi->env, key, val);
 };
 
-inline int 
-fcgi_send_packet (int fd, struct fcgi_header* header, const char* buf)
+const char*
+fcgi_env_get (struct fcgi* fcgi, const char* key)
 {
-    if (!header)
-    {
-        return 0;
-    }
+    ASSERT (fcgi);
+    ASSERT (key);
 
-    struct literal_fcgi_header h;
-    h.version = (unsigned char) header->version;
-    h.type = (unsigned char) header->type;
-    h.request_id_1 = (unsigned char) (header->request_id >> 8);
-    h.request_id_0 = (unsigned char) (header->request_id);
-    h.content_length_1 = (unsigned char) (header->content_length >> 8);
-    h.content_length_0 = (unsigned char) header->content_length;
-    h.padding_length = (unsigned char) header->padding_length;
+    return (const char*) trie_find (&fcgi->env, key);
+};
 
-//    printf ("version: %x \n", h.version);
-//    printf ("type: %x \n", h.type);
-//    printf ("request_id_1: %x \n", h.request_id_1);
-//    printf ("request_id_0: %x \n", h.request_id_0);
-//    printf ("content_length_1: %x \n", h.content_length_1);
-//    printf ("content_length_0: %x \n", h.content_length_0);
-//    printf ("padding_length: %x \n", h.padding_length);
-    
-    size_t amt = send (fd, &h, sizeof (struct literal_fcgi_header), 0);
-    printf ("%u \n", sizeof (struct literal_fcgi_header));
-    printf ("%u \n", amt);
-    if (amt != sizeof (struct literal_fcgi_header))
-    {
-        printf ("failed to send packet \n");
-        return 0;
-    }
-    amt = send (fd, buf, (size_t) header->content_length, 0);
-    printf ("%u \n", (size_t) header->content_length);
-    printf ("%u \n", amt);
-    if (header->content_length != amt)
-    {
-        printf ("failed to send content \n");
-//        return 0;
-    }
-    // Allocate some memory to send the padding
-    unsigned char* padding = (unsigned char*) 
-        malloc ((size_t) header->padding_length);
-    if (!padding)
-    {
-        return 0;
-    }
-    amt = send (fd, padding, (size_t) header->padding_length, 0);
-    printf ("%u \n", (size_t) header->padding_length);
-    printf ("%u \n", amt);
-    if ((size_t) header->padding_length != amt)
-    {
-        printf ("failed to send padding \n");
-        free (padding);
-        return 0;
-    }
-    free (padding);
-    
+static struct fcgi*
+lookup (struct frame* f)
+{
+    struct fcgi _f;
+
+    ASSERT (f);
+
+    _f.request_id = f->request_id;
+
+    return bst_find (fcgi_sessions, &_f);
+};
+
+static int 
+compare_sessions (const void* _a, const void* _b, const void* AUX)
+{
+    const struct fcgi* a;
+    const struct fcgi* b;
+
+    ASSERT (_a);
+    ASSERT (_b);
+
+    a = (const struct fcgi*) _a;
+    b = (const struct fcgi*) _b;
+
+    return a->request_id - b->request_id;
+};
+
+static int 
+process_begin_request (struct frame* f, struct fcgi* fcgi, const char* str, size_t num)
+{
+    struct begin_request_body* b;
+
+    ASSERT (f);
+    ASSERT (fcgi);
+    ASSERT (str);
+        
+    b = (struct begin_request_body*) str;
+
+    fcgi->role = (int) (b->role_1 << 8) + (int) b->role_0;
+    fcgi->flags = b->flags;
+
+    printf ("BEGIN REQUEST: role=%d, flags=%d \n", fcgi->role, fcgi->flags);
+
     return 1;
 };
 
-int 
-fcgi_process_begin_request (struct fcgi_header* header, 
-        struct fcgi_connection* conn, const char* buf)
+static int
+process_abort_request (struct frame* f, struct fcgi* fcgi, const char* str, size_t num)
 {
-    CHECK_PTR(header);
-    CHECK_PTR(conn);
-    CHECK_PTR(buf);
-
-    printf ("begin reuquest \n");
-
-    struct fcgi_begin_request_body* b = 
-        (struct fcgi_begin_request_body*) buf;
-
-    conn->role = (int) (b->role_1 << 8) + (int) b->role_0;
-    conn->flags = b->flags;
-    printf ("Role: %d \n", conn->role);
-    printf ("Flags: %x \n", conn->flags);
-
-    return 1;     
+    return 1;
 };
 
-int 
-fcgi_process_abort_request (struct fcgi_header* header, 
-        struct fcgi_connection* conn, const char* buf)
+static int 
+process_end_request (struct frame* f, struct fcgi* fcgi, const char* str, size_t num)
 {
-    printf ("abort request \n");
-    return 0;    
+    return 1;
 };
 
-/*
- * Probably not called ever.
- * */
-int 
-fcgi_process_end_request (struct fcgi_header* header, 
-        struct fcgi_connection* conn, const char* buf)
+static int
+process_params (struct frame* f, struct fcgi* fcgi, const char* _str, size_t num)
 {
-    printf ("end request \n");
-    return 0;   
-};
+    const char* str;
 
-int 
-fcgi_process_params (struct fcgi_header* header, 
-        struct fcgi_connection* conn, const char* buf)
-{
-    const char* _buf = buf;
+    ASSERT (_str);
 
-    printf ("Length: %d \n", header->content_length);
-    while (_buf + header->content_length > buf)
+    printf ("PARAMS: %s \n", _str);
+
+    str = _str;
+    size_t name_len = 0;
+    size_t value_len = 0;
+    size_t accum = 0;
+
+    while (accum < f->content_length)
     {
-        unsigned char name_length_0 = *buf++;
-//        printf ("NameLength0: %x \n", name_length_0);
-        int name_length = (int) name_length_0;
-        if (name_length_0 >> 7) // High-order bit is one
+        if (*((byte*) str) >> 7) // High-order bit is one
         {
-            unsigned char   name_length_1 = *buf++,
-                            name_length_2 = *buf++,
-                            name_length_3 = *buf++;
-//            printf ("NameLength1: %x \n", name_length_1);
-//            printf ("NameLength2: %x \n", name_length_2);
-//            printf ("NameLength3: %x \n", name_length_3);
-            name_length = 
-                ((int) (name_length_3 & 0x7f) << 24) + 
-                (int) (name_length_2 << 16) + 
-                (int) (name_length_1 << 8) + 
-                (int) name_length_0;
+            struct name_len_4 nlen;
+            memcpy (&nlen, str, sizeof (nlen));
+            str += sizeof (nlen);
+
+            name_len = (int) nlen.name_length_0 + 
+                        (int) (nlen.name_length_1 << 8) +
+                        (int) (nlen.name_length_2 << 16) + 
+                        (int) ((nlen.name_length_3 & 0x7f) << 24);
+            accum += sizeof (nlen) + name_len;
         }
-        unsigned char value_length_0 = *buf++;
-//        printf ("ValueLength0: %x \n", value_length_0);
-        int value_length = (int) value_length_0;
-        if (value_length_0 >> 7)
+        else
         {
-            unsigned char value_length_1 = *buf++, 
-                          value_length_2 = *buf++, 
-                          value_length_3 = *buf++;
-//            printf ("ValueLength1: %x \n", value_length_1);
-//            printf ("ValueLength2: %x \n", value_length_2);
-//            printf ("ValueLength3: %x \n", value_length_3);
-            value_length = 
-                ((int) (value_length_3 & 0x7f) << 24) + 
-                (int) (value_length_2 << 16) + 
-                (int) (value_length_1 << 8) + 
-                (int) value_length_0;
+            struct name_len_1 nlen;
+            memcpy (&nlen, str, sizeof (nlen));
+            str += sizeof (nlen);
+
+            name_len = (int) nlen.name_length_0;
+            accum += sizeof (nlen) + name_len;
         }
 
-        char* name_data = (char*) malloc (sizeof (char) * name_length + 1);
-        if (!name_data)
+        if (*((byte*) str) >> 7)
         {
-            return 0;
+            struct value_len_4 vlen;
+            memcpy (&vlen, str, sizeof (vlen));
+            str += sizeof (vlen);
+
+            value_len = (int) vlen.value_length_0 + 
+                        (int) (vlen.value_length_1 << 8) +
+                        (int) (vlen.value_length_2 << 16) +
+                        (int) ((vlen.value_length_3 & 0x7f) << 24);
+            accum += sizeof (vlen) + value_len;
+        }
+        else
+        {
+            struct value_len_1 vlen;
+            memcpy (&vlen, str, sizeof (vlen));
+            str += sizeof (vlen);
+
+            value_len = (int) vlen.value_length_0;
+            accum += sizeof (vlen) + value_len;
         }
 
-        char* value_data = (char*) malloc (sizeof (char) * value_length + 1);
-        if (!value_data)
+        char* name_data = (char*) malloc (sizeof (char) * (name_len + 1));
+        if (NULL == name_data)
+        {
+            return -1;
+        }
+        char* value_data = (char*) malloc (sizeof (char) * (value_len + 1));
+        if (NULL == value_data)
         {
             free (name_data);
-            return 0;
+            return -1;
         }
 
-        memcpy (name_data, buf, name_length);
-        name_data[name_length] = '\0';
-        buf += name_length;
-        memcpy (value_data, buf, value_length);
-        value_data[value_length] = '\0';
-        buf += value_length;
+        memcpy (name_data, str, name_len);
+        str += name_len;
+        name_data[name_len] = '\0';
+        memcpy (value_data, str, value_len);
+        str += value_len;
+        value_data[value_len] = '\0';
 
-        printf ("Name Data: %s \n", name_data);
-        printf ("Value Data: %s \n", value_data);
+        fcgi_env_add (fcgi, name_data, value_data);
+        printf ("    %s=%s \n", name_data, value_data);
     }
 
+    ASSERT (accum == f->content_length);
+
     return 1;
 };
 
-int 
-fcgi_process_stdin (struct fcgi_header* header, 
-        struct fcgi_connection* conn, const char* buf)
+static int
+process_stdin (struct frame* f, struct fcgi* fcgi, const char* str, size_t num)
 {
-//    char* stdin = (char*) malloc (sizeof (char) * header->content_length);
-//    if (!stdin)
-//    {
-//        return 0;
-//    }
-//
-//    memcpy (stdin, buf, header->content_length);
-//    printf ("stdin: %s \n", stdin);
+    char* _stdin;
 
+    ASSERT (f);
+    ASSERT (fcgi);
+    ASSERT (str);
 
-    write (conn->stdin, buf, header->content_length);
+    printf ("process_stdin \n");
+
+    _stdin = (char*) malloc (sizeof (byte) * (f->content_length + 1));
+    if (NULL == _stdin)
+    {
+        printf ("ERROR \n");
+        return 0;
+    }
+
+    memcpy (_stdin, str, f->content_length);
+    _stdin[f->content_length] = '\0';
+    fcgi->_stdin = _stdin;
+
+    printf ("    stdin: %s \n", fcgi->_stdin);
+
     return 1;
 };
 
-int 
-fcgi_process_stdout (struct fcgi_header* header, 
-        struct fcgi_connection* conn, const char* buf)
+static int
+process_stdout (struct frame* f, struct fcgi* fcgi, const char* str, size_t num)
 {
-    printf ("stdout \n");
-    return 0;
+    return 1;
 };
 
-int 
-fcgi_process_stderr (struct fcgi_header* header, 
-        struct fcgi_connection* conn, const char* buf)
+static int 
+process_stderr (struct frame* f, struct fcgi* fcgi, const char* str, size_t num)
 {
-    printf ("stderr \n");
-    return 0;
+    return 1;
 };
 
-int 
-fcgi_process_data (struct fcgi_header* header, 
-        struct fcgi_connection* conn, const char* buf)
+static int
+process_data (struct frame* f, struct fcgi* fcgi, const char* str, size_t num)
 {
-    printf ("data \n");
-    return 0;
+    return 1;
 };
 
-int 
-fcgi_process_get_values (struct fcgi_header* header, 
-        struct fcgi_connection* conn, const char* buf)
+static int 
+process_get_values (struct frame* f, struct fcgi* fcgi, const char* str, size_t num)
 {
-    printf ("get values \n");
-    return 0;
+    return 1;
 };
 
-int 
-fcgi_process_get_values_result (struct fcgi_header* header, 
-        struct fcgi_connection* conn, const char* buf)
+static int 
+process_get_values_result (struct frame* f, struct fcgi* fcgi, const char* str, size_t num)
 {
-    printf ("get values result \n");
-    return 0;
+    return 1;
 };
 
-int 
-fcgi_process_unknown_type (struct fcgi_header* header, 
-        struct fcgi_connection* conn, const char* buf)
+static int
+process_unknown_type (struct frame* f, struct fcgi* fcgi, const char* str, size_t num)
 {
-    printf ("unknown type \n");
-    return 0;
+    return 1;
 };
-
-struct fcgi_connection* 
-fcgi_lookup_connection (int request_id)
-{
-    return connections[request_id - 1];    
-};
-
-
-
-
-
 
 

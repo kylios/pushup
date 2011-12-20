@@ -1,6 +1,0 @@
-127.0.0.1 - - [25/Apr/2011:20:03:05 -0400] "GET / HTTP/1.1" -1 0 - "curl/7.21.4 (x86_64-unknown-linux-gnu) libcurl/7.21.4 OpenSSL/1.0.0d zlib/1.2.5"
-127.0.0.1 - - [25/Apr/2011:20:03:18 -0400] "GET / HTTP/1.1" -1 0 - "Mozilla/5.0 (X11; Linux x86_64; rv:2.0) Gecko/20110321 Firefox/4.0"
-127.0.0.1 - - [25/Apr/2011:20:03:19 -0400] "GET /favicon.ico HTTP/1.1" -1 0 - "Mozilla/5.0 (X11; Linux x86_64; rv:2.0) Gecko/20110321 Firefox/4.0"
-127.0.0.1 - - [25/Apr/2011:20:03:19 -0400] "GET /favicon.ico HTTP/1.1" -1 0 - "Mozilla/5.0 (X11; Linux x86_64; rv:2.0) Gecko/20110321 Firefox/4.0"
-127.0.0.1 - - [25/Apr/2011:20:03:57 -0400] "GET / HTTP/1.1" -1 0 - "Mozilla/5.0 (X11; Linux x86_64; rv:2.0) Gecko/20110321 Firefox/4.0"
-127.0.0.1 - - [25/Apr/2011:20:04:00 -0400] "GET / HTTP/1.1" -1 0 - "curl/7.21.4 (x86_64-unknown-linux-gnu) libcurl/7.21.4 OpenSSL/1.0.0d zlib/1.2.5"
