@@ -3,18 +3,37 @@
 
 #include <stddef.h>
 #include <event.h>
+#include <semaphore.h>
 
 #include "type.h"
 #include "trie.h"
+#include "list.h"
 
 struct fcgi
 {
+    /* fastcgi request information */
     int request_id;
     int version;
-    int sockfd; 
     int role;
-    struct bufferevent* bufev;
     char flags;
+
+    /* Misc */
+    struct bufferevent* bufev;
+    int sockfd; 
+    
+    sem_t stdin_ready;
+    int stdin_read;
+    int stdin_write;
+
+    sem_t stdout_ready;
+    int stdout_read;
+    int stdout_write;
+
+    sem_t stderr_ready;
+    int stderr_read;
+    int stderr_write;
+
+    struct list_elem elem;
 
     /* key => value mapping for environment variables */
     struct trie env;

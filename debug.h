@@ -18,5 +18,9 @@ void hexdump (void* start, size_t sz);
 #define DEBUG_MARK  \
     printf ("DEBUG %s: %d (`%s')\n", __FILE__, __LINE__, __func__);
 
+#define NOT_REACHED \
+    printf ("UNREACHABLE STATEMENT HAS BEEN REACHED: %s: %d (%s) \n", __FILE__, __LINE__, __func__); \
+    while (1);
+
 #endif //__DEBUG_H
 

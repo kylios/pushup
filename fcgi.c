@@ -222,6 +222,10 @@ fcgi_read (const char* data, size_t num, struct bufferevent* in)
 static void
 fcgi_init (struct fcgi* fcgi, struct frame* f)
 {
+    int stdin_pipe[2];
+    int stdout_pipe[2];
+    int stderr_pipe[2];
+
     ASSERT (fcgi);
     ASSERT (f);
 
@@ -229,6 +233,25 @@ fcgi_init (struct fcgi* fcgi, struct frame* f)
     fcgi->version = f->version;
 
     trie_init (&fcgi->env);
+    sem_init (&fcgi->stdin_ready, 1, 0);
+    sem_init (&fcgi->stdout_ready, 1, 0);
+    sem_init (&fcgi->stderr_ready, 1, 0);
+    if (pipe (stdin_pipe) < 0 || 
+            pipe (stdout_pipe) < 0 ||
+            pipe (stderr_pipe) < 0)
+    {
+        close (stdin_pipe[0]);  close (stdin_pipe[1]);
+        close (stdout_pipe[0]); close (stdout_pipe[1]);
+        close (stderr_pipe[0]); close (stderr_pipe[1]);
+        return;
+    }
+
+    fcgi->stdin_read = stdin_pipe[0];
+    fcgi->stdin_write = stdin_pipe[1];
+    fcgi->stdout_read = stdout_pipe[0];
+    fcgi->stdout_write = stdout_pipe[1];
+    fcgi->stderr_read = stderr_pipe[0];
+    fcgi->stderr_write = stderr_pipe[1];
 };
 
 void
@@ -419,6 +442,9 @@ process_stdin (struct frame* f, struct fcgi* fcgi, const char* str, size_t num)
     fcgi->_stdin = _stdin;
 
     printf ("    stdin: %s \n", fcgi->_stdin);
+
+    write (fcgi->stdin_write, str, f->content_length);
+    sem_post (&fcgi->stdin_ready);
 
     return 1;
 };

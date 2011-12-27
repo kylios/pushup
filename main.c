@@ -32,8 +32,8 @@ main (int argc, char** argv)
 {
     event_init ();
     init_fcgi ();
-//    init_child ();
-//    init_pushup ();
+    init_child ();
+    init_pushup ();
 
 //    int listen_fd = bind_unix_socket (SOCKET_PATH);
     int listen_fd = bind_addr_port ("127.0.0.1", 4, SERVER_PORT);
@@ -66,6 +66,8 @@ main (int argc, char** argv)
     }
     printf ("FIN. \n");
     close (listen_fd);
+
+    end_pushup ();
     return 0;
 };
 

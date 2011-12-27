@@ -2,10 +2,12 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <semaphore.h>
 
 #include "pushup.h"
+#include "child.h"
 #include "debug.h"
 #include "type.h"
 #include "fcgi.h"
@@ -23,12 +25,23 @@ struct proc
     struct fcgi* fcgi; // fastcgi connection this process is handling
 };
 
+// List of worker processes
 static struct proc procs[NUM_PROCS];
+
+// Number of workers available to process fcgi requests
 static unsigned int procs_available;
+// Protects procs_available 
 static pthread_mutex_t procs_lock;
-static sem_t procs_count;
+
+// List of fcgi requests waiting to be processed
+static struct list wait_queue;
+static pthread_mutex_t wait_queue_lock;
+
 
 static int proc_init (struct proc*);
+
+static struct proc* get_available_proc ();
+static void assign_proc (struct proc* p, struct fcgi* fcgi);
 
 void
 init_pushup ()
@@ -37,18 +50,16 @@ init_pushup ()
     int ret;
 
     pthread_mutex_init (&procs_lock, NULL);
-    sem_init (&procs_count, 0, NUM_PROCS);
+    pthread_mutex_init (&wait_queue_lock, NULL);
+
+    list_init (&wait_queue);
 
     procs_available = NUM_PROCS;
     for (i = 0; i < NUM_PROCS; i++)
     {
         printf ("spawning child %u \n", i);
         struct proc* p = &procs[i];
-        printf ("up \n");
-        sem_wait (&procs_count);
         ret = proc_init (p);
-        printf ("down \n");
-        sem_post (&procs_count);
         if (-1 == ret)
         {
             printf ("Error in creation of child \n");
@@ -68,19 +79,27 @@ void
 end_pushup ()
 {
     int i;
+    struct proc* p;
 
     for (i = 0; i < NUM_PROCS; i++)
     {
-        printf ("waiting: %d \n", i);
-        sem_wait (&procs_count);
+        p = &procs[i];
+
+        printf ("waiting: %d \n", p->pid);
+        waitpid (p->pid, &p->status, 0);
     }
+    
+    /* All children are dead */
 };
 
 int
 proc_init (struct proc* p)
 {
-
     ASSERT (p);
+
+    dup (0);
+    dup (1);
+    dup (2);
 
     int writepipe[2] = {-1, -1};
     int readpipe[2] = {-1, -1};
@@ -125,5 +144,77 @@ proc_init (struct proc* p)
 
         return 0;
     }
+};
+
+int 
+pushup_dispatch (struct fcgi* fcgi)
+{
+    struct proc* p;
+
+    ASSERT (fcgi);
+
+    /*
+     * Check how many workers are available to process requests.  
+     * If there are none available, save the requests in a queue to be
+     * assigned later. */
+    pthread_mutex_lock (&procs_lock);
+    if (0 == procs_available)
+    {
+        pthread_mutex_unlock (&procs_lock);
+
+        pthread_mutex_lock (&wait_queue_lock);
+        list_push_back (&wait_queue, &fcgi->elem);
+        pthread_mutex_unlock (&wait_queue_lock);
+    }
+    else
+    {
+        p = get_available_proc ();
+        ASSERT (NULL != p);
+
+        assign_proc (p, fcgi);
+
+        pthread_mutex_unlock (&p->lock);
+        pthread_mutex_unlock (&procs_lock);
+    }
+};
+
+static struct proc* 
+get_available_proc ()
+{
+    int i;
+
+    ASSERT (procs_available > 0);
+    // ASSERT (we hold procs_lock)
+
+    for (i = 0; i < NUM_PROCS; i++)
+    {
+        pthread_mutex_lock (&procs[i].lock);
+        if (procs[i].fcgi == NULL)
+        {
+            return &procs[i];
+        }
+        pthread_mutex_unlock (&procs[i].lock);
+    }
+
+    // Our ASSERTs should prevent us from logically getting here
+    NOT_REACHED;
+};
+
+static void
+assign_proc (struct proc* p, struct fcgi* fcgi)
+{
+    struct child_cmd cmd;
+
+    ASSERT (p);
+    ASSERT (p->fcgi == NULL);
+    ASSERT (fcgi);
+    // ASSERT (we hold p->lock)
+
+    p->fcgi = fcgi;
+
+    cmd.type = CMD_FCGI;
+    cmd.content_length = sizeof (struct fcgi);
+    write (p->write_fd, &cmd, sizeof (struct child_cmd));
+    write (p->write_fd, p->fcgi, sizeof (struct fcgi));
 };
 

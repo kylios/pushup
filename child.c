@@ -56,6 +56,10 @@ child_run (pid_t pid, int read_fd, int write_fd)
 //    } while (cmd->type != CMD_APP_EXIT && cmd->type != CMD_PROC_EXIT);
 
     printf ("Child here! %u \n", pid);
+
+    read (read_fd, &cmd, sizeof (struct child_cmd));
+    printf ("Child %u received command %d \n", pid, cmd.type);
+
     return 0;
 };
 
