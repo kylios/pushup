@@ -138,6 +138,7 @@ fcgi_read (const char* data, size_t num, struct bufferevent* in)
     struct fcgi* fcgi;
 
     ASSERT (data);
+    ASSERT (num == sizeof (struct frame_header));
 
     printf ("reading new frame \n");
 
@@ -156,14 +157,9 @@ fcgi_read (const char* data, size_t num, struct bufferevent* in)
     printf ("    type=%d, request_id=%d, content_length=%u, padding_length=%u \n",
             f.type, f.request_id, f.content_length, f.padding_length);
 
-    /*
-     * Check if the web server actually supplied enough data to fill
-     * content_data and padding_data.  If it didn't, that means the webserver or
-     * client crashed and the connection was severed.
-     * */
-    if (num <= f.content_length + f.padding_length)
+    if (f.type > 12 || f.type < 1)
     {
-        // TODO: set error code
+        printf ("Reported frame type is outside of boundaries \n");
         return -1;
     }
 
@@ -210,6 +206,7 @@ fcgi_read (const char* data, size_t num, struct bufferevent* in)
         return -1;
     }
 
+    printf ("content length: %d \n", f.content_length);
     printf ("reading content...\n");
     if (!handlers[f.type] (&f, fcgi, f.content, num))
     {

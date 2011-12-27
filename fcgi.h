@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <event.h>
 
+#include "type.h"
 #include "trie.h"
 
 struct fcgi
